@@ -35,10 +35,10 @@ export default async function RootLayout({
   const semester = await loadSemester();
 
   return (
-    <html lang="ko" className={pretendard.variable}>
-      <body>
+    <html lang="ko" className={`${pretendard.variable} h-full`}>
+      <body className="flex min-h-full flex-col">
         <Header semester={semester} />
-        <main className="w-full max-w-331.25 mx-auto mt-24 mb-24 px-4">{children}</main>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">{children}</main>
       </body>
     </html>
   );
