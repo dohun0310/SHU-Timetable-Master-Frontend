@@ -35,11 +35,11 @@ function toPayload(request: GenerateRequest): unknown {
     })),
     constraints: {
       ...(constraints.freeDays.length > 0 ? { freeDays: constraints.freeDays } : {}),
-      ...(constraints.avoidBefore ? { avoidBefore: constraints.avoidBefore } : {}),
-      ...(constraints.avoidAfter ? { avoidAfter: constraints.avoidAfter } : {}),
+      ...(constraints.avoidBefore !== null ? { avoidBefore: constraints.avoidBefore } : {}),
+      ...(constraints.avoidAfter !== null ? { avoidAfter: constraints.avoidAfter } : {}),
       ...(credits ? { credits } : {}),
     },
-    ...(request.limit ? { limit: request.limit } : {}),
+    ...(request.limit !== undefined ? { limit: request.limit } : {}),
   };
 }
 
