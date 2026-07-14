@@ -8,9 +8,41 @@ import { cn } from "@/lib/utils/cn";
 
 const cellClass = "border border-gray-100 dark:border-gray-800";
 
-function blockKey(block: GridBlock): string {
-  const { course, meeting } = block;
-  return `${course.id}-${meeting.day}-${meeting.startPeriod}`;
+/** 한 칸에 그릴 항목. 같은 강좌·같은 시간대의 meeting은 강의실만 모아 하나로 합친다. */
+interface CellItem {
+  key: string;
+  block: GridBlock;
+  locations: string[];
+}
+
+/**
+ * 같은 강좌가 같은 요일·같은 시간대에 meeting을 여러 개 갖는 경우가 실제로 있다(강의실만 다름).
+ * 같은 수업이므로 칸에 두 번 그릴 이유가 없다. 하나로 합치고 강의실을 나란히 보여준다.
+ * 시간대(시작·끝 교시)까지 키에 넣으므로, 시간이 다른 meeting은 그대로 각자 그려진다.
+ */
+function cellItems(blocks: GridBlock[]): CellItem[] {
+  const items = new Map<string, CellItem>();
+
+  for (const block of blocks) {
+    const { course, meeting } = block;
+    const key = `${course.id}-${meeting.day}-${meeting.startPeriod}-${meeting.endPeriod}`;
+    const item = items.get(key);
+
+    if (!item) {
+      items.set(key, {
+        key,
+        block,
+        locations: meeting.location ? [meeting.location] : [],
+      });
+      continue;
+    }
+
+    if (meeting.location && !item.locations.includes(meeting.location)) {
+      item.locations.push(meeting.location);
+    }
+  }
+
+  return [...items.values()];
 }
 
 /**
@@ -19,14 +51,16 @@ function blockKey(block: GridBlock): string {
  */
 function Block({
   block,
+  locations,
   period,
   onRemove,
 }: {
   block: GridBlock;
+  locations: string[];
   period: number;
   onRemove?: (courseId: string) => void;
 }) {
-  const { course, meeting, conflicted } = block;
+  const { course, conflicted } = block;
 
   return (
     <div
@@ -52,14 +86,14 @@ function Block({
               </button>
             ) : null}
           </span>
-          {meeting.location ? (
+          {locations.length > 0 ? (
             <span
               className={cn(
                 "truncate",
                 conflicted ? "" : "text-gray-500 dark:text-gray-400",
               )}
             >
-              {meeting.location}
+              {locations.join(", ")}
             </span>
           ) : null}
         </>
@@ -123,15 +157,16 @@ export default function TimetableBoard({
                   {period}
                 </th>
                 {grid.days.map((day) => {
-                  const blocks = blocksAt(grid, day, period);
+                  const items = cellItems(blocksAt(grid, day, period));
                   return (
                     <td key={day} className={cn(cellClass, "bg-background h-10 p-0.5 align-top")}>
-                      {blocks.length > 0 ? (
+                      {items.length > 0 ? (
                         <div className="flex h-full gap-0.5">
-                          {blocks.map((block) => (
+                          {items.map((item) => (
                             <Block
-                              key={blockKey(block)}
-                              block={block}
+                              key={item.key}
+                              block={item.block}
+                              locations={item.locations}
                               period={period}
                               onRemove={onRemove}
                             />
