@@ -1,10 +1,11 @@
 "use client";
 
 import { useBasket } from "@/components/BasketProvider";
+import ToggleChip from "@/components/ToggleChip";
 import { weekdayLabels, weekdays, type Weekday } from "@/lib/timetable/types";
 
 const fieldClass =
-  "bg-background w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700";
+  "bg-background w-full appearance-none rounded-md border border-gray-200 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700";
 const labelClass = "mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400";
 
 /** 공강일은 주말을 뺀 월~금만 고른다. */
@@ -25,10 +26,12 @@ export default function ConstraintsPanel() {
   const invalidRange = minCredits !== null && maxCredits !== null && minCredits > maxCredits;
 
   const toggleFreeDay = (day: Weekday) => {
-    const freeDays = constraints.freeDays.includes(day)
-      ? constraints.freeDays.filter((selected) => selected !== day)
-      : [...constraints.freeDays, day];
-    setConstraints({ ...constraints, freeDays });
+    setConstraints((previous) => ({
+      ...previous,
+      freeDays: previous.freeDays.includes(day)
+        ? previous.freeDays.filter((selected) => selected !== day)
+        : [...previous.freeDays, day],
+    }));
   };
 
   return (
@@ -39,20 +42,15 @@ export default function ConstraintsPanel() {
         <legend className={labelClass}>공강일</legend>
         <div className="flex flex-wrap gap-1.5">
           {selectableDays.map((day) => (
-            <label
+            <ToggleChip
               key={day}
-              className="has-checked:border-foreground has-checked:bg-foreground has-checked:text-background flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-xs text-gray-700 has-focus-visible:ring-2 has-focus-visible:ring-gray-500 dark:border-gray-700 dark:text-gray-300"
+              pressed={constraints.freeDays.includes(day)}
+              onToggle={() => toggleFreeDay(day)}
+              label={`공강일 ${weekdayLabels[day]}`}
+              className="h-8 w-8"
             >
-              <input
-                type="checkbox"
-                name="freeDay"
-                value={day}
-                checked={constraints.freeDays.includes(day)}
-                onChange={() => toggleFreeDay(day)}
-                className="sr-only"
-              />
               {weekdayLabels[day]}
-            </label>
+            </ToggleChip>
           ))}
         </div>
       </fieldset>
@@ -67,7 +65,7 @@ export default function ConstraintsPanel() {
             type="time"
             value={constraints.avoidBefore ?? ""}
             onChange={(event) =>
-              setConstraints({ ...constraints, avoidBefore: toTime(event.target.value) })
+              setConstraints((previous) => ({ ...previous, avoidBefore: toTime(event.target.value) }))
             }
             className={fieldClass}
           />
@@ -81,7 +79,7 @@ export default function ConstraintsPanel() {
             type="time"
             value={constraints.avoidAfter ?? ""}
             onChange={(event) =>
-              setConstraints({ ...constraints, avoidAfter: toTime(event.target.value) })
+              setConstraints((previous) => ({ ...previous, avoidAfter: toTime(event.target.value) }))
             }
             className={fieldClass}
           />
@@ -99,7 +97,7 @@ export default function ConstraintsPanel() {
             aria-invalid={invalidRange}
             aria-describedby={invalidRange ? "constraint-credits-error" : undefined}
             onChange={(event) =>
-              setConstraints({ ...constraints, minCredits: toCredits(event.target.value) })
+              setConstraints((previous) => ({ ...previous, minCredits: toCredits(event.target.value) }))
             }
             className={fieldClass}
           />
@@ -117,7 +115,7 @@ export default function ConstraintsPanel() {
             aria-invalid={invalidRange}
             aria-describedby={invalidRange ? "constraint-credits-error" : undefined}
             onChange={(event) =>
-              setConstraints({ ...constraints, maxCredits: toCredits(event.target.value) })
+              setConstraints((previous) => ({ ...previous, maxCredits: toCredits(event.target.value) }))
             }
             className={fieldClass}
           />

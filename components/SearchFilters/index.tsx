@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import ToggleChip from "@/components/ToggleChip";
 import type { CatalogFilter, CatalogFilters } from "@/lib/contracts/course-catalog";
 import { weekdayLabels, weekdays } from "@/lib/timetable/types";
 
@@ -24,7 +25,7 @@ function useLabelIndex(options: CatalogFilter[]) {
 }
 
 function fieldClass(): string {
-  return "bg-background w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700";
+  return "bg-background w-full appearance-none rounded-md border border-gray-200 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700";
 }
 
 function labelClass(): string {
@@ -49,6 +50,36 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
 
   const selectedCategories = listOf("category");
   const selectedDays = listOf("day");
+
+  /**
+   * 칩은 폼 값이지만 클릭으로 다루면 iOS에서 엉뚱한 칩이 켜진다(ToggleChip 주석 참고).
+   * 그래서 선택 상태를 직접 들고 있다가 hidden input으로 폼에 실어 보낸다. 검색이 끝나 URL이
+   * 바뀌면 그 URL을 다시 정답으로 삼는다.
+   */
+  const urlKey = searchParams.toString();
+  const [chips, setChips] = useState({
+    urlKey,
+    categories: selectedCategories,
+    days: selectedDays,
+  });
+  if (chips.urlKey !== urlKey) {
+    setChips({ urlKey, categories: selectedCategories, days: selectedDays });
+  }
+
+  const toggleChip = (key: "categories" | "days", value: string) => {
+    setChips((previous) => ({
+      ...previous,
+      [key]: previous[key].includes(value)
+        ? previous[key].filter((selected) => selected !== value)
+        : [...previous[key], value],
+    }));
+  };
+
+  /** 같은 선택이면 누른 순서와 무관하게 같은 URL이 나와야 공유·캐시가 흔들리지 않는다. */
+  const orderedCategories = filters.categories
+    .map((category) => category.id)
+    .filter((id) => chips.categories.includes(id));
+  const orderedDays = weekdays.filter((day) => chips.days.includes(day));
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -98,6 +129,7 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
 
   const handleReset = () => {
     setUnknownFields([]);
+    setChips({ urlKey: "", categories: [], days: [] });
     router.push("/");
   };
 
@@ -290,42 +322,40 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
           <legend className={labelClass()}>이수구분</legend>
           <div className="flex flex-wrap gap-1.5">
             {filters.categories.map((category) => (
-              <label
+              <ToggleChip
                 key={category.id}
-                className="has-checked:border-foreground has-checked:bg-foreground has-checked:text-background flex cursor-pointer items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1 text-xs text-gray-700 has-focus-visible:ring-2 has-focus-visible:ring-gray-500 dark:border-gray-700 dark:text-gray-300"
+                pressed={chips.categories.includes(category.id)}
+                onToggle={() => toggleChip("categories", category.id)}
+                label={`이수구분 ${category.label}`}
+                className="gap-1.5 px-2.5 py-1"
               >
-                <input
-                  type="checkbox"
-                  name="category"
-                  value={category.id}
-                  defaultChecked={selectedCategories.includes(category.id)}
-                  className="sr-only"
-                />
                 {category.label} ({category.count})
-              </label>
+              </ToggleChip>
             ))}
           </div>
+          {orderedCategories.map((category) => (
+            <input key={category} type="hidden" name="category" value={category} />
+          ))}
         </fieldset>
 
         <fieldset className="mt-3">
           <legend className={labelClass()}>요일</legend>
           <div className="flex flex-wrap gap-1.5">
             {weekdays.map((day) => (
-              <label
+              <ToggleChip
                 key={day}
-                className="has-checked:border-foreground has-checked:bg-foreground has-checked:text-background flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-xs text-gray-700 has-focus-visible:ring-2 has-focus-visible:ring-gray-500 dark:border-gray-700 dark:text-gray-300"
+                pressed={chips.days.includes(day)}
+                onToggle={() => toggleChip("days", day)}
+                label={`요일 ${weekdayLabels[day]}`}
+                className="h-8 w-8"
               >
-                <input
-                  type="checkbox"
-                  name="day"
-                  value={day}
-                  defaultChecked={selectedDays.includes(day)}
-                  className="sr-only"
-                />
                 {weekdayLabels[day]}
-              </label>
+              </ToggleChip>
             ))}
           </div>
+          {orderedDays.map((day) => (
+            <input key={day} type="hidden" name="day" value={day} />
+          ))}
         </fieldset>
 
         <div className="mt-4 flex gap-2">
