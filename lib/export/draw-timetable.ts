@@ -1,3 +1,4 @@
+import { cellItems } from "@/lib/timetable/cells";
 import { totalCredits } from "@/lib/timetable/credits";
 import { blocksAt, buildGrid, isBlockStart } from "@/lib/timetable/grid";
 import { weekdayLabels, type Course } from "@/lib/timetable/types";
@@ -64,12 +65,13 @@ export function drawTimetable(courses: Course[], title: string): HTMLCanvasEleme
   context.fillRect(0, 0, width, height);
   context.textBaseline = "middle";
 
+  const tableWidth = width - padding * 2;
+
   context.fillStyle = colors.text;
   context.font = font(20, "bold");
-  context.fillText(title, padding, padding + 12);
+  context.fillText(fitText(context, title, tableWidth), padding, padding + 12);
 
   const tableTop = padding + headerHeight;
-  const tableWidth = width - padding * 2;
   const dayWidth = (tableWidth - timeColumnWidth) / grid.days.length;
   const columnX = (index: number) => padding + timeColumnWidth + index * dayWidth;
 
@@ -91,7 +93,8 @@ export function drawTimetable(courses: Course[], title: string): HTMLCanvasEleme
 
     grid.days.forEach((day, index) => {
       const x = columnX(index);
-      const items = blocksAt(grid, day, period);
+      /** 화면과 같은 규칙으로 합친다. 한쪽만 합치면 같은 시간표가 서로 다르게 보인다. */
+      const items = cellItems(blocksAt(grid, day, period));
 
       context.strokeStyle = colors.line;
       context.lineWidth = 1;
@@ -100,7 +103,7 @@ export function drawTimetable(courses: Course[], title: string): HTMLCanvasEleme
       if (items.length === 0) return;
 
       const itemWidth = dayWidth / items.length;
-      items.forEach((block, order) => {
+      items.forEach(({ block, locations }, order) => {
         const itemX = x + order * itemWidth;
 
         context.fillStyle = block.conflicted ? colors.conflict : colors.block;
@@ -115,14 +118,16 @@ export function drawTimetable(courses: Course[], title: string): HTMLCanvasEleme
         const inner = itemWidth - 10;
 
         if (isBlockStart(block, period)) {
+          /** 흑백으로 인쇄하면 색만으로는 겹침을 알 수 없다. 글자로도 남긴다. */
+          const name = block.conflicted ? `⚠ ${block.course.name}` : block.course.name;
           context.fillStyle = colors.text;
           context.font = font(12, "bold");
-          context.fillText(fitText(context, block.course.name, inner), itemX + 5, y + 15);
+          context.fillText(fitText(context, name, inner), itemX + 5, y + 15);
 
-          if (block.meeting.location) {
+          if (locations.length > 0) {
             context.fillStyle = colors.muted;
             context.font = font(11);
-            context.fillText(fitText(context, block.meeting.location, inner), itemX + 5, y + 31);
+            context.fillText(fitText(context, locations.join(", "), inner), itemX + 5, y + 31);
           }
         } else {
           context.fillStyle = colors.muted;

@@ -37,6 +37,8 @@ export function canvasToPdf(canvas: HTMLCanvasElement): Blob {
   const box = fitBox(canvas.width, canvas.height);
 
   const content = `q ${box.width.toFixed(2)} 0 0 ${box.height.toFixed(2)} ${box.x.toFixed(2)} ${box.y.toFixed(2)} cm /Im0 Do Q`;
+  // `/Length`는 글자 수가 아니라 바이트 수다. 지금은 ASCII뿐이라 같지만, 그 전제에 기대지 않는다.
+  const contentLength = encoder.encode(content).length;
 
   const objects: Array<string | Uint8Array> = [
     "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
@@ -47,7 +49,7 @@ export function canvasToPdf(canvas: HTMLCanvasElement): Blob {
       `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${image.length} >>\nstream\n`,
     image,
     "\nendstream\nendobj\n",
-    `5 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`,
+    `5 0 obj\n<< /Length ${contentLength} >>\nstream\n${content}\nendstream\nendobj\n`,
   ];
 
   const chunks: Uint8Array[] = [encoder.encode("%PDF-1.4\n")];
