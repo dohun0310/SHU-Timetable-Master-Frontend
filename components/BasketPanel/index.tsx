@@ -45,6 +45,13 @@ function BasketSection({
   );
 }
 
+/** 이름이 같고 코드가 다른 과목이 실제로 존재하므로 이름만으로는 바구니를 구별할 수 없다. */
+function subjectText(sections: Course[]): string {
+  const [first] = sections;
+  if (!first) return "";
+  return [first.courseCode, first.department?.name].filter(Boolean).join(" · ");
+}
+
 function BasketItem({ basket }: { basket: Basket }) {
   const { courses, removeBasket, removeCourse, toggleRequired } = useBasket();
   const [open, setOpen] = useState(false);
@@ -52,6 +59,8 @@ function BasketItem({ basket }: { basket: Basket }) {
     .map((courseId) => courses[courseId])
     .filter((course): course is Course => Boolean(course));
   const hasWarning = sections.some((course) => !isSchedulable(course));
+  const subject = subjectText(sections);
+  const basketName = subject.length > 0 ? `${basket.label} (${subject})` : basket.label;
 
   return (
     <li className="rounded-md border border-gray-100 dark:border-gray-800">
@@ -70,6 +79,11 @@ function BasketItem({ basket }: { basket: Basket }) {
               </span>
             ) : null}
           </span>
+          {subject.length > 0 ? (
+            <span className="mt-0.5 block truncate text-2xs text-gray-500 dark:text-gray-400">
+              {subject}
+            </span>
+          ) : null}
           <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
             분반 {sections.length}개 · {open ? "접기" : "펼치기"}
           </span>
@@ -91,7 +105,7 @@ function BasketItem({ basket }: { basket: Basket }) {
         <button
           type="button"
           onClick={() => removeBasket(basket.id)}
-          aria-label={`${basket.label} 바구니 삭제`}
+          aria-label={`${basketName} 바구니 삭제`}
           className="hover:bg-foreground/10 shrink-0 rounded px-1.5 py-1 text-xs text-gray-500 dark:text-gray-400"
         >
           삭제
