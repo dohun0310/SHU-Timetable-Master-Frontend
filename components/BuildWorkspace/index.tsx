@@ -32,15 +32,20 @@ interface Outcome {
 
 /**
  * 결과를 만들어낸 입력(바구니 구성·제약)의 지문. 이 값이 달라지면 화면에 남은 결과는 더 이상
- * 지금 조건의 답이 아니다. 키 순서에 흔들리지 않도록 필요한 값만 순서대로 이어붙인다.
+ * 지금 조건의 답이 아니다. 서버로 보내는 값은 모두 지문에 넣는다. 담긴 순서만 달라진 것은
+ * 같은 입력이므로, 헛되이 결과를 버리지 않도록 정렬해서 이어붙인다.
  */
 function inputSignature(baskets: Basket[], constraints: Constraints): string {
   const basketPart = baskets
-    .map((basket) => `${basket.id}:${basket.required ? 1 : 0}:${basket.courseIds.join(",")}`)
+    .map(
+      (basket) =>
+        `${basket.id}:${basket.label}:${basket.required ? 1 : 0}:${[...basket.courseIds].sort().join(",")}`,
+    )
+    .sort()
     .join("|");
   const { freeDays, avoidBefore, avoidAfter, minCredits, maxCredits } = constraints;
   const constraintPart = [
-    freeDays.join(","),
+    [...freeDays].sort().join(","),
     avoidBefore ?? "",
     avoidAfter ?? "",
     minCredits ?? "",
