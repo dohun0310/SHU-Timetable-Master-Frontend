@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
-import { CourseList, CourseListSkeleton } from "@/components/search/course-list";
-import { Pagination } from "@/components/search/pagination";
-import { SearchFilters } from "@/components/search/search-filters";
+import CourseList, { CourseListSkeleton } from "@/components/CourseList";
+import Pagination from "@/components/Pagination";
+import SearchFilters from "@/components/SearchFilters";
 import { createCourseCatalog } from "@/lib/catalog";
 import type {
   CatalogFilters,

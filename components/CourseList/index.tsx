@@ -1,7 +1,7 @@
-import { CourseCard } from "@/components/search/course-card";
+import CourseCard from "@/components/CourseCard";
 import type { CoursePage } from "@/lib/contracts/course-catalog";
 
-export function CourseList({ page }: { page: CoursePage }) {
+export default function CourseList({ page }: { page: CoursePage }) {
   if (page.courses.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">

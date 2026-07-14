@@ -31,7 +31,7 @@ function labelClass(): string {
   return "mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400";
 }
 
-export function SearchFilters({ filters }: { filters: CatalogFilters }) {
+export default function SearchFilters({ filters }: { filters: CatalogFilters }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);

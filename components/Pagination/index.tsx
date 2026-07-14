@@ -11,7 +11,7 @@ function pageWindow(current: number, totalPages: number): number[] {
   return pages;
 }
 
-export function Pagination({ page, totalPages }: { page: number; totalPages: number }) {
+export default function Pagination({ page, totalPages }: { page: number; totalPages: number }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 

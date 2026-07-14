@@ -15,7 +15,7 @@ function isCurrent(pathname: string, href: string): boolean {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-export function SiteHeader({ semester }: { semester: SemesterInfo | null }) {
+export default function Header({ semester }: { semester: SemesterInfo | null }) {
   const pathname = usePathname();
 
   return (

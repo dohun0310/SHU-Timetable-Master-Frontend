@@ -20,7 +20,7 @@ function scheduleLines(course: Course): string[] {
   return ["시간 미지정"];
 }
 
-export function CourseCard({ course }: { course: Course }) {
+export default function CourseCard({ course }: { course: Course }) {
   const schedulable = isSchedulable(course);
   const professors = course.professors.length > 0 ? course.professors.join(", ") : "미정";
 

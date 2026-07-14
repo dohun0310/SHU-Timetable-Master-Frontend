@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
-import { SiteHeader } from "@/components/site-header";
+import Header from "@/components/Header";
 import { createCourseCatalog } from "@/lib/catalog";
 import type { SemesterInfo } from "@/lib/timetable/types";
 
@@ -37,7 +37,7 @@ export default async function RootLayout({
   return (
     <html lang="ko" className={pretendard.variable}>
       <body>
-        <SiteHeader semester={semester} />
+        <Header semester={semester} />
         <main className="w-full max-w-331.25 mx-auto mt-24 mb-24 px-4">{children}</main>
       </body>
     </html>
