@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
+import Providers from "@/app/providers";
 import Header from "@/components/Header";
 import { createCourseCatalog } from "@/lib/catalog";
+import { semesterKeyOf } from "@/lib/timetable/semester";
 import type { SemesterInfo } from "@/lib/timetable/types";
 
 const pretendard = localFont({
@@ -37,8 +39,10 @@ export default async function RootLayout({
   return (
     <html lang="ko" className={`${pretendard.variable} h-full`}>
       <body className="bg-background flex min-h-full flex-col">
-        <Header semester={semester} />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">{children}</main>
+        <Providers semesterKey={semester ? semesterKeyOf(semester) : null}>
+          <Header semester={semester} />
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">{children}</main>
+        </Providers>
       </body>
     </html>
   );
