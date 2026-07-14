@@ -19,12 +19,9 @@ export default function Header({ semester }: { semester: SemesterInfo | null }) 
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/90 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/90">
+    <header className="bg-background/90 sticky top-0 z-20 border-b border-gray-100 backdrop-blur dark:border-gray-800">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6">
-        <Link
-          href="/"
-          className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
-        >
+        <Link href="/" className="text-base font-semibold tracking-tight">
           시간표 마법사
         </Link>
         <nav aria-label="주요 메뉴" className="flex items-center gap-1 text-sm">
@@ -37,8 +34,8 @@ export default function Header({ semester }: { semester: SemesterInfo | null }) 
                 aria-current={current ? "page" : undefined}
                 className={
                   current
-                    ? "rounded-md bg-zinc-900 px-3 py-1.5 font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "rounded-md px-3 py-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                    ? "bg-foreground text-background rounded-md px-3 py-1.5 font-medium"
+                    : "hover:bg-foreground/10 hover:text-foreground rounded-md px-3 py-1.5 text-gray-600 dark:text-gray-400"
                 }
               >
                 {item.label}
@@ -47,7 +44,7 @@ export default function Header({ semester }: { semester: SemesterInfo | null }) 
           })}
         </nav>
         {semester ? (
-          <span className="ml-auto text-sm text-zinc-500 dark:text-zinc-400">
+          <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
             {semester.academicYear}학년도 {semesterLabels[semester.semester]}
           </span>
         ) : null}

@@ -25,36 +25,32 @@ export default function CourseCard({ course }: { course: Course }) {
   const professors = course.professors.length > 0 ? course.professors.join(", ") : "미정";
 
   return (
-    <li className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+    <li className="bg-foreground/5 rounded-lg border border-gray-100 p-4 dark:border-gray-800">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-              {course.name}
-            </h3>
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            <h3 className="text-base font-semibold">{course.name}</h3>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {course.classNumber}분반 · {course.courseCode}
             </span>
           </div>
 
           <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm sm:grid-cols-[auto_1fr_auto_1fr] sm:gap-x-4">
-            <dt className="text-zinc-500 dark:text-zinc-400">교수</dt>
-            <dd className="truncate text-zinc-800 dark:text-zinc-200">{professors}</dd>
-            <dt className="text-zinc-500 dark:text-zinc-400">학과</dt>
-            <dd className="truncate text-zinc-800 dark:text-zinc-200">
-              {course.department?.name ?? "미지정"}
-            </dd>
-            <dt className="text-zinc-500 dark:text-zinc-400">학점</dt>
-            <dd className="text-zinc-800 dark:text-zinc-200">{course.credits}학점</dd>
-            <dt className="text-zinc-500 dark:text-zinc-400">이수구분</dt>
-            <dd className="truncate text-zinc-800 dark:text-zinc-200">{course.categoryLabel}</dd>
+            <dt className="text-gray-500 dark:text-gray-400">교수</dt>
+            <dd className="truncate">{professors}</dd>
+            <dt className="text-gray-500 dark:text-gray-400">학과</dt>
+            <dd className="truncate">{course.department?.name ?? "미지정"}</dd>
+            <dt className="text-gray-500 dark:text-gray-400">학점</dt>
+            <dd>{course.credits}학점</dd>
+            <dt className="text-gray-500 dark:text-gray-400">이수구분</dt>
+            <dd className="truncate">{course.categoryLabel}</dd>
           </dl>
 
           <ul className="mt-2 flex flex-wrap gap-1.5">
             {scheduleLines(course).map((line) => (
               <li
                 key={line}
-                className="rounded bg-zinc-100 px-2 py-0.5 font-mono text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                className="bg-foreground/10 rounded px-2 py-0.5 font-mono text-xs text-gray-700 dark:text-gray-300"
               >
                 {line}
               </li>
@@ -72,7 +68,7 @@ export default function CourseCard({ course }: { course: Course }) {
           type="button"
           disabled
           title="바구니는 곧 지원될 예정입니다"
-          className="shrink-0 cursor-not-allowed rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-400 dark:border-zinc-700 dark:text-zinc-600"
+          className="shrink-0 cursor-not-allowed rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-400 dark:border-gray-700 dark:text-gray-600"
         >
           바구니에 담기
         </button>

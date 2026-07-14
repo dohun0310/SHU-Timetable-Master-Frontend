@@ -4,7 +4,7 @@ import type { CoursePage } from "@/lib/contracts/course-catalog";
 export default function CourseList({ page }: { page: CoursePage }) {
   if (page.courses.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+      <div className="bg-foreground/5 rounded-lg border border-dashed border-gray-200 p-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
         조건에 맞는 강좌가 없습니다.
       </div>
     );
@@ -15,7 +15,7 @@ export default function CourseList({ page }: { page: CoursePage }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
         총 {page.total.toLocaleString()}개 중 {first.toLocaleString()}–{last.toLocaleString()}번째
         강좌
       </p>
@@ -31,12 +31,12 @@ export default function CourseList({ page }: { page: CoursePage }) {
 export function CourseListSkeleton() {
   return (
     <div className="flex flex-col gap-3" aria-busy="true" aria-live="polite">
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">강좌를 불러오는 중입니다…</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">강좌를 불러오는 중입니다…</p>
       <ul className="flex flex-col gap-2">
         {Array.from({ length: 6 }, (_, index) => (
           <li
             key={index}
-            className="h-28 animate-pulse rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+            className="bg-foreground/5 h-28 animate-pulse rounded-lg border border-gray-100 dark:border-gray-800"
           />
         ))}
       </ul>

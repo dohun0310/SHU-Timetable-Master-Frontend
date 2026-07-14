@@ -30,8 +30,8 @@ export default function Pagination({ page, totalPages }: { page: number; totalPa
 
   const buttonClass = (active: boolean) =>
     active
-      ? "min-w-9 rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-      : "min-w-9 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800";
+      ? "bg-foreground text-background min-w-9 rounded-md px-3 py-1.5 text-sm font-medium"
+      : "bg-foreground/5 hover:bg-foreground/10 min-w-9 rounded-md border border-gray-200 px-3 py-1.5 text-sm text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-300";
 
   return (
     <nav aria-label="페이지 이동" className="flex flex-wrap items-center justify-center gap-1.5">
@@ -62,7 +62,7 @@ export default function Pagination({ page, totalPages }: { page: number; totalPa
       >
         다음
       </button>
-      <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
+      <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
         {current} / {totalPages}
       </span>
     </nav>

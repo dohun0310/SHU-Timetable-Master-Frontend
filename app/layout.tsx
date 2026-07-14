@@ -36,7 +36,7 @@ export default async function RootLayout({
 
   return (
     <html lang="ko" className={`${pretendard.variable} h-full`}>
-      <body className="flex min-h-full flex-col">
+      <body className="bg-background flex min-h-full flex-col">
         <Header semester={semester} />
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">{children}</main>
       </body>
