@@ -119,6 +119,17 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
         </button>
       </div>
 
+      {/* 패널이 접혀도 보여야 하므로 form 바깥에 둔다. */}
+      {unknownFields.length > 0 ? (
+        <p
+          role="status"
+          className="mt-3 mb-3 text-xs text-amber-700 md:mt-0 dark:text-amber-300"
+        >
+          목록에 없는 값이라 {unknownFields.join(", ")} 조건은 적용하지 않았습니다. 자동완성
+          목록에서 골라주세요.
+        </p>
+      ) : null}
+
       <form
         key={searchParams.toString()}
         onSubmit={handleSubmit}
@@ -316,13 +327,6 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
             ))}
           </div>
         </fieldset>
-
-        {unknownFields.length > 0 ? (
-          <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">
-            목록에 없는 값이라 {unknownFields.join(", ")} 조건은 적용하지 않았습니다. 자동완성
-            목록에서 골라주세요.
-          </p>
-        ) : null}
 
         <div className="mt-4 flex gap-2">
           <button
