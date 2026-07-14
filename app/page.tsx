@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
-import BasketPanel from "@/components/BasketPanel";
-import ConstraintsPanel from "@/components/ConstraintsPanel";
 import CourseList, { CourseListSkeleton } from "@/components/CourseList";
 import Pagination from "@/components/Pagination";
 import SearchFilters from "@/components/SearchFilters";
@@ -124,17 +122,9 @@ export default async function SearchPage({
   return (
     <div className="flex flex-col gap-4">
       <SearchFilters filters={filters} />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_19rem]">
-        <div className="min-w-0">
-          <Suspense key={JSON.stringify(query)} fallback={<CourseListSkeleton />}>
-            <SearchResults catalog={catalog} query={query} unreadableFields={unreadableFields} />
-          </Suspense>
-        </div>
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
-          <BasketPanel />
-          <ConstraintsPanel />
-        </aside>
-      </div>
+      <Suspense key={JSON.stringify(query)} fallback={<CourseListSkeleton />}>
+        <SearchResults catalog={catalog} query={query} unreadableFields={unreadableFields} />
+      </Suspense>
     </div>
   );
 }

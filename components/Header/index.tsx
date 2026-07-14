@@ -47,9 +47,13 @@ export default function Header({ semester }: { semester: SemesterInfo | null }) 
         </nav>
         <div className="ml-auto flex items-center gap-3">
           {baskets.length > 0 ? (
-            <span className="bg-foreground text-background rounded-md px-2 py-0.5 text-xs font-medium">
+            <Link
+              href="/build"
+              aria-label={`바구니 ${baskets.length}개 · 시간표 만들기로 가기`}
+              className="bg-foreground text-background hover:bg-foreground/85 rounded-md px-2 py-0.5 text-xs font-medium"
+            >
               바구니 {baskets.length}
-            </span>
+            </Link>
           ) : null}
           {semester ? (
             <span className="text-sm text-gray-500 dark:text-gray-400">
