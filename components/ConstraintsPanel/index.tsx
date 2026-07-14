@@ -21,6 +21,8 @@ function toCredits(value: string): number | null {
 
 export default function ConstraintsPanel() {
   const { constraints, setConstraints } = useBasket();
+  const { minCredits, maxCredits } = constraints;
+  const invalidRange = minCredits !== null && maxCredits !== null && minCredits > maxCredits;
 
   const toggleFreeDay = (day: Weekday) => {
     const freeDays = constraints.freeDays.includes(day)
@@ -94,6 +96,8 @@ export default function ConstraintsPanel() {
             min={0}
             max={30}
             value={constraints.minCredits ?? ""}
+            aria-invalid={invalidRange}
+            aria-describedby={invalidRange ? "constraint-credits-error" : undefined}
             onChange={(event) =>
               setConstraints({ ...constraints, minCredits: toCredits(event.target.value) })
             }
@@ -110,6 +114,8 @@ export default function ConstraintsPanel() {
             min={0}
             max={30}
             value={constraints.maxCredits ?? ""}
+            aria-invalid={invalidRange}
+            aria-describedby={invalidRange ? "constraint-credits-error" : undefined}
             onChange={(event) =>
               setConstraints({ ...constraints, maxCredits: toCredits(event.target.value) })
             }
@@ -117,6 +123,16 @@ export default function ConstraintsPanel() {
           />
         </div>
       </div>
+
+      {invalidRange ? (
+        <p
+          id="constraint-credits-error"
+          role="alert"
+          className="mt-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          최소 학점이 최대 학점보다 큽니다. 범위를 다시 확인해주세요.
+        </p>
+      ) : null}
     </section>
   );
 }
