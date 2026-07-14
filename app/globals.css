@@ -1,32 +1,144 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #FFFFFF;
+  --foreground: #151515;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #151515;
+    --foreground: #FFFFFF;
   }
+}
+
+@theme inline {
+  --font-sans: var(--font-pretendard), -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-red-50:  #FFF5F5;
+  --color-red-100: #FFE3E3;
+  --color-red-200: #FFC1C1;
+  --color-red-300: #FF9A9A;
+  --color-red-400: #FF6E6E;
+  --color-red-500: #FC4F4F;
+  --color-red-600: #E23C3C;
+  --color-red-700: #C92B2B;
+  --color-red-800: #A92020;
+  --color-red-900: #6D1313;
+
+  --color-orange-50:  #FFF8EF;
+  --color-orange-100: #FFEFD9;
+  --color-orange-200: #FFDFB5;
+  --color-orange-300: #FFCC8A;
+  --color-orange-400: #FFB85F;
+  --color-orange-500: #FF9F43;
+  --color-orange-600: #EB8B31;
+  --color-orange-700: #D47622;
+  --color-orange-800: #A85A18;
+  --color-orange-900: #6F3A0E;
+
+  --color-green-50:  #F2FCF5;
+  --color-green-100: #E1F9E7;
+  --color-green-200: #C1F1CF;
+  --color-green-300: #98E6B2;
+  --color-green-400: #6BD88E;
+  --color-green-500: #4AD871;
+  --color-green-600: #38BA5A;
+  --color-green-700: #299344;
+  --color-green-800: #1D6C32;
+  --color-green-900: #124722;
+
+  --color-cyan-50:  #E6FBFF;
+  --color-cyan-100: #CCF5FF;
+  --color-cyan-200: #99EAFA;
+  --color-cyan-300: #66D7EE;
+  --color-cyan-400: #33C2DE;
+  --color-cyan-500: #00A5C2;
+  --color-cyan-600: #008EAB;
+  --color-cyan-700: #00758D;
+  --color-cyan-800: #005368;
+  --color-cyan-900: #003844;
+
+  --color-blue-50:  #F3F7FF;
+  --color-blue-100: #E3EDFF;
+  --color-blue-200: #C1D7FF;
+  --color-blue-300: #9BBEFF;
+  --color-blue-400: #74A5FF;
+  --color-blue-500: #599BFF;
+  --color-blue-600: #407DEB;
+  --color-blue-700: #2D63C9;
+  --color-blue-800: #1D4996;
+  --color-blue-900: #122D61;
+
+  --color-purple-50:  #F7F1FF;
+  --color-purple-100: #ECE2FF;
+  --color-purple-200: #D8C7FF;
+  --color-purple-300: #C1A6FF;
+  --color-purple-400: #A97FFF;
+  --color-purple-500: #9747FF;
+  --color-purple-600: #7E35DB;
+  --color-purple-700: #6425B8;
+  --color-purple-800: #491A8A;
+  --color-purple-900: #2F115C;
+
+  --color-gray-50:  #F5F5F5;
+  --color-gray-100: #E8E8E8;
+  --color-gray-200: #D4D4D4;
+  --color-gray-300: #BFBFBF;
+  --color-gray-400: #A8A8A8;
+  --color-gray-500: #919191;
+  --color-gray-600: #777777;
+  --color-gray-700: #5C5C5C;
+  --color-gray-800: #383838;
+  --color-gray-900: #1A1A1A;
+
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: calc(1 / 0.625);
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+  --text-sm: 0.875rem;
+  --text-sm--line-height: calc(1.25 / 0.875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.625rem;
+  --text-3xl--line-height: calc(2 / 1.625);
+
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --breakpoint-sm: 39.625rem;
+  --breakpoint-md: 42.125rem;
+  --breakpoint-lg: 60.25rem;
+
+  @keyframes slide {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  --animate-slide: slide 0.3s ease-out;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family:
-    var(--font-geist-sans),
-    "Pretendard",
-    "Apple SD Gothic Neo",
-    "Malgun Gothic",
-    system-ui,
-    sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
