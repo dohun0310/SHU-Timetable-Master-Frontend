@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { useBasket } from "@/components/BasketProvider";
-import type { SweepReport } from "@/lib/storage/shelf-capabilities";
+import type { SweepReport } from "@/lib/contracts/timetable-shelf";
 import { isSchedulable } from "@/lib/timetable/schedulability";
 import type { Basket, Course } from "@/lib/timetable/types";
 import { professorText, scheduleLines } from "@/lib/utils/course-format";

@@ -8,12 +8,7 @@ import {
   type ReactNode,
 } from "react";
 
-import type { TimetableShelf, Workspace } from "@/lib/contracts/timetable-shelf";
-import {
-  shelfCapabilitiesOf,
-  type ShelfCapabilities,
-  type SweepReport,
-} from "@/lib/storage/shelf-capabilities";
+import type { SweepReport, TimetableShelf, Workspace } from "@/lib/contracts/timetable-shelf";
 import {
   emptyConstraints,
   type Basket,
@@ -85,14 +80,11 @@ class BasketStore {
   private hydrated = false;
   private unwatch: (() => void) | null = null;
   private readonly listeners = new Set<() => void>();
-  private readonly capabilities: ShelfCapabilities | null;
 
   constructor(
     private readonly shelf: TimetableShelf,
     private readonly semesterKey: SemesterKey | null,
-  ) {
-    this.capabilities = shelfCapabilitiesOf(shelf);
-  }
+  ) {}
 
   subscribe = (listener: () => void): (() => void) => {
     if (!this.hydrated) this.hydrate();
@@ -176,8 +168,8 @@ class BasketStore {
   };
 
   private watch(): void {
-    if (this.unwatch || !this.capabilities) return;
-    this.unwatch = this.capabilities.watchExternalChange(this.reload);
+    if (this.unwatch) return;
+    this.unwatch = this.shelf.watchExternalChange(this.reload);
   }
 
   private stopWatching(): void {
@@ -192,16 +184,14 @@ class BasketStore {
     this.snapshot = {
       ...workspaceOf(this.shelf.loadWorkspace()),
       swept,
-      canPersist: this.capabilities?.canPersist() ?? true,
+      canPersist: this.shelf.canPersist(),
     };
   }
 
   /** 학기를 모르면(백엔드 다운) 만료를 판정할 수 없으므로 아무것도 지우지 않는다. */
   private sweep(): SweepReport {
     if (this.semesterKey === null) return noSweep;
-    if (this.capabilities) return this.capabilities.sweepStaleReport(this.semesterKey);
-    const swept = this.shelf.sweepStale(this.semesterKey);
-    return { workspace: swept, timetables: swept };
+    return this.shelf.sweepStaleReport(this.semesterKey);
   }
 
   private commit(change: Partial<BasketSnapshot>): void {
@@ -215,7 +205,7 @@ class BasketStore {
     if (this.semesterKey === null) return;
     const { baskets, constraints, courses } = this.snapshot;
     this.shelf.saveWorkspace({ semesterKey: this.semesterKey, baskets, constraints, courses });
-    const canPersist = this.capabilities?.canPersist() ?? true;
+    const canPersist = this.shelf.canPersist();
     if (canPersist !== this.snapshot.canPersist) {
       this.snapshot = { ...this.snapshot, canPersist };
     }

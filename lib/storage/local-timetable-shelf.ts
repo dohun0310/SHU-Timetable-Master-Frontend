@@ -1,7 +1,11 @@
-import type { SavedTimetable, TimetableShelf, Workspace } from "../contracts/timetable-shelf";
+import type {
+  SavedTimetable,
+  SweepReport,
+  TimetableShelf,
+  Workspace,
+} from "../contracts/timetable-shelf";
 import { isStale } from "../timetable/semester";
 import type { SemesterKey } from "../timetable/types";
-import type { ShelfCapabilities, SweepReport } from "./shelf-capabilities";
 import { parseSavedTimetables, parseWorkspace } from "./workspace-validation";
 
 const version = 1;
@@ -40,7 +44,7 @@ export function clearStoredData(): void {
   }
 }
 
-export class LocalTimetableShelf implements TimetableShelf, ShelfCapabilities {
+export class LocalTimetableShelf implements TimetableShelf {
   private persistable: boolean | null = null;
 
   loadWorkspace(): Workspace | null {
@@ -68,11 +72,6 @@ export class LocalTimetableShelf implements TimetableShelf, ShelfCapabilities {
       savedKey,
       this.listTimetables().filter((saved) => saved.id !== id),
     );
-  }
-
-  sweepStale(currentKey: SemesterKey): boolean {
-    const report = this.sweepStaleReport(currentKey);
-    return report.workspace || report.timetables;
   }
 
   sweepStaleReport(currentKey: SemesterKey): SweepReport {
