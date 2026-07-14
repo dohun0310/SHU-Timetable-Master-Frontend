@@ -261,12 +261,22 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
         ? "겹치는 강좌가 있어 확정할 수 없습니다. 겹치는 강좌를 빼주세요."
         : semesterKey === null
           ? "학기 정보를 확인할 수 없어 저장할 수 없습니다."
-          : null;
+          : canPersist
+            ? null
+            : "이 브라우저에서는 시간표를 저장할 수 없습니다.";
+
+  /** 이름을 비워 두면 붙일 기본 이름. 지웠다 다시 저장해도 겹치지 않게 빈 번호를 찾는다. */
+  const defaultName = (): string => {
+    const taken = new Set(timetables.map((timetable) => timetable.name));
+    let number = 1;
+    while (taken.has(`내 시간표 ${number}`)) number += 1;
+    return `내 시간표 ${number}`;
+  };
 
   const confirm = () => {
     if (blockedReason !== null) return;
     const trimmed = name.trim();
-    const timetableName = trimmed.length > 0 ? trimmed : `내 시간표 ${timetables.length + 1}`;
+    const timetableName = trimmed.length > 0 ? trimmed : defaultName();
     saveTimetable(timetableName, boardCourses);
     setName("");
     setSavedName(timetableName);
@@ -329,7 +339,7 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder={`내 시간표 ${timetables.length + 1}`}
+              placeholder={defaultName()}
               aria-label="시간표 이름"
               className="bg-background w-48 rounded-md border border-gray-200 px-2.5 py-1.5 text-sm dark:border-gray-700"
             />
@@ -346,12 +356,6 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
           {blockedReason !== null ? (
             <p className="text-xs text-gray-500 dark:text-gray-400">{blockedReason}</p>
           ) : null}
-
-          {canPersist ? null : (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              이 브라우저에서는 저장이 유지되지 않습니다. 탭을 닫으면 사라집니다.
-            </p>
-          )}
 
           {savedName !== null ? (
             <p role="status" className="text-xs text-gray-500 dark:text-gray-400">
