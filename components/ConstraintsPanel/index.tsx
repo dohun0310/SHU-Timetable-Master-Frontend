@@ -2,6 +2,7 @@
 
 import { useBasket } from "@/components/BasketProvider";
 import { weekdayLabels, weekdays, type Weekday } from "@/lib/timetable/types";
+import { cn } from "@/lib/utils/cn";
 
 const fieldClass =
   "bg-background w-full appearance-none rounded-md border border-gray-200 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700";
@@ -25,10 +26,12 @@ export default function ConstraintsPanel() {
   const invalidRange = minCredits !== null && maxCredits !== null && minCredits > maxCredits;
 
   const toggleFreeDay = (day: Weekday) => {
-    const freeDays = constraints.freeDays.includes(day)
-      ? constraints.freeDays.filter((selected) => selected !== day)
-      : [...constraints.freeDays, day];
-    setConstraints({ ...constraints, freeDays });
+    setConstraints((previous) => ({
+      ...previous,
+      freeDays: previous.freeDays.includes(day)
+        ? previous.freeDays.filter((selected) => selected !== day)
+        : [...previous.freeDays, day],
+    }));
   };
 
   return (
@@ -38,22 +41,31 @@ export default function ConstraintsPanel() {
       <fieldset>
         <legend className={labelClass}>공강일</legend>
         <div className="flex flex-wrap gap-1.5">
-          {selectableDays.map((day) => (
-            <label
-              key={day}
-              className="has-checked:border-foreground has-checked:bg-foreground has-checked:text-background flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-xs text-gray-700 has-focus-visible:ring-2 has-focus-visible:ring-gray-500 dark:border-gray-700 dark:text-gray-300"
-            >
-              <input
-                type="checkbox"
-                name="freeDay"
-                value={day}
-                checked={constraints.freeDays.includes(day)}
-                onChange={() => toggleFreeDay(day)}
-                className="sr-only"
-              />
-              {weekdayLabels[day]}
-            </label>
-          ))}
+          {selectableDays.map((day) => {
+            const selected = constraints.freeDays.includes(day);
+            return (
+              /**
+               * iOS Safari는 더블탭 확대를 판별하려고 탭 후 클릭을 잠시 미루고, 그 사이에 다른
+               * 칸을 누르면 클릭이 먼저 누른 요소로 합성된다. `touch-manipulation`으로 확대를
+               * 꺼 지연을 없앤다. 숨긴 체크박스를 label이 대신 누르는 구조도 이 재타게팅에
+               * 취약하므로 버튼으로 직접 다룬다.
+               */
+              <button
+                key={day}
+                type="button"
+                onClick={() => toggleFreeDay(day)}
+                aria-pressed={selected}
+                className={cn(
+                  "flex h-8 w-8 touch-manipulation items-center justify-center rounded-md border text-xs focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:outline-none",
+                  selected
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-300",
+                )}
+              >
+                {weekdayLabels[day]}
+              </button>
+            );
+          })}
         </div>
       </fieldset>
 
@@ -67,7 +79,7 @@ export default function ConstraintsPanel() {
             type="time"
             value={constraints.avoidBefore ?? ""}
             onChange={(event) =>
-              setConstraints({ ...constraints, avoidBefore: toTime(event.target.value) })
+              setConstraints((previous) => ({ ...previous, avoidBefore: toTime(event.target.value) }))
             }
             className={fieldClass}
           />
@@ -81,7 +93,7 @@ export default function ConstraintsPanel() {
             type="time"
             value={constraints.avoidAfter ?? ""}
             onChange={(event) =>
-              setConstraints({ ...constraints, avoidAfter: toTime(event.target.value) })
+              setConstraints((previous) => ({ ...previous, avoidAfter: toTime(event.target.value) }))
             }
             className={fieldClass}
           />
@@ -99,7 +111,7 @@ export default function ConstraintsPanel() {
             aria-invalid={invalidRange}
             aria-describedby={invalidRange ? "constraint-credits-error" : undefined}
             onChange={(event) =>
-              setConstraints({ ...constraints, minCredits: toCredits(event.target.value) })
+              setConstraints((previous) => ({ ...previous, minCredits: toCredits(event.target.value) }))
             }
             className={fieldClass}
           />
@@ -117,7 +129,7 @@ export default function ConstraintsPanel() {
             aria-invalid={invalidRange}
             aria-describedby={invalidRange ? "constraint-credits-error" : undefined}
             onChange={(event) =>
-              setConstraints({ ...constraints, maxCredits: toCredits(event.target.value) })
+              setConstraints((previous) => ({ ...previous, maxCredits: toCredits(event.target.value) }))
             }
             className={fieldClass}
           />

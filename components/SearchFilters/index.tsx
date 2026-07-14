@@ -292,7 +292,7 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
             {filters.categories.map((category) => (
               <label
                 key={category.id}
-                className="has-checked:border-foreground has-checked:bg-foreground has-checked:text-background flex cursor-pointer items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1 text-xs text-gray-700 has-focus-visible:ring-2 has-focus-visible:ring-gray-500 dark:border-gray-700 dark:text-gray-300"
+                className="has-checked:border-foreground has-checked:bg-foreground has-checked:text-background flex touch-manipulation cursor-pointer items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1 text-xs text-gray-700 has-focus-visible:ring-2 has-focus-visible:ring-gray-500 dark:border-gray-700 dark:text-gray-300"
               >
                 <input
                   type="checkbox"
@@ -313,7 +313,7 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
             {weekdays.map((day) => (
               <label
                 key={day}
-                className="has-checked:border-foreground has-checked:bg-foreground has-checked:text-background flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-xs text-gray-700 has-focus-visible:ring-2 has-focus-visible:ring-gray-500 dark:border-gray-700 dark:text-gray-300"
+                className="has-checked:border-foreground has-checked:bg-foreground has-checked:text-background flex touch-manipulation h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-xs text-gray-700 has-focus-visible:ring-2 has-focus-visible:ring-gray-500 dark:border-gray-700 dark:text-gray-300"
               >
                 <input
                   type="checkbox"
