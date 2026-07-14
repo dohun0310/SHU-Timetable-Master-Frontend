@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 
 import { generateTimetables } from "@/app/build/actions";
@@ -127,10 +128,12 @@ function FeedbackNotice({
 }
 
 export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterKey | null }) {
-  const { baskets, constraints, courses } = useBasket();
+  const { baskets, constraints, courses, timetables, canPersist, saveTimetable } = useBasket();
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [index, setIndex] = useState(0);
   const [boardCourseIds, setBoardCourseIds] = useState<string[]>([]);
+  const [name, setName] = useState("");
+  const [savedName, setSavedName] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const basketCourses = baskets.flatMap((basket) =>
@@ -251,12 +254,23 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
     });
   };
 
-  const confirmBlockedReason =
+  const blockedReason =
     boardCourses.length === 0
       ? "보드에 강좌를 넣어야 확정할 수 있습니다."
       : conflicted.size > 0
         ? "겹치는 강좌가 있어 확정할 수 없습니다. 겹치는 강좌를 빼주세요."
-        : "시간표 저장은 곧 열립니다.";
+        : semesterKey === null
+          ? "학기 정보를 확인할 수 없어 저장할 수 없습니다."
+          : null;
+
+  const confirm = () => {
+    if (blockedReason !== null) return;
+    const trimmed = name.trim();
+    const timetableName = trimmed.length > 0 ? trimmed : `내 시간표 ${timetables.length + 1}`;
+    saveTimetable(timetableName, boardCourses);
+    setName("");
+    setSavedName(timetableName);
+  };
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[19rem_1fr]">
@@ -309,15 +323,44 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
 
         <TimetableBoard courses={boardCourses} onRemove={removeFromBoard} />
 
-        <div>
-          <button
-            type="button"
-            disabled
-            className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-400 dark:border-gray-700 dark:text-gray-600"
-          >
-            이 시간표로 확정
-          </button>
-          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{confirmBlockedReason}</p>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={`내 시간표 ${timetables.length + 1}`}
+              aria-label="시간표 이름"
+              className="bg-background w-48 rounded-md border border-gray-200 px-2.5 py-1.5 text-sm dark:border-gray-700"
+            />
+            <button
+              type="button"
+              onClick={confirm}
+              disabled={blockedReason !== null}
+              className="bg-foreground text-background enabled:hover:bg-foreground/85 rounded-md px-4 py-2 text-sm font-medium disabled:bg-gray-200 disabled:text-gray-500 dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
+            >
+              이 시간표로 확정
+            </button>
+          </div>
+
+          {blockedReason !== null ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400">{blockedReason}</p>
+          ) : null}
+
+          {canPersist ? null : (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              이 브라우저에서는 저장이 유지되지 않습니다. 탭을 닫으면 사라집니다.
+            </p>
+          )}
+
+          {savedName !== null ? (
+            <p role="status" className="text-xs text-gray-500 dark:text-gray-400">
+              &lsquo;{savedName}&rsquo;(으)로 저장했습니다.{" "}
+              <Link href="/my" className="text-foreground font-medium underline">
+                내 시간표에서 확인
+              </Link>
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
