@@ -10,6 +10,7 @@ import type { GenerateResult } from "@/lib/contracts/timetable-maker";
 import { unschedulableCourses } from "@/lib/timetable/schedulability";
 import {
   weekdayLabels,
+  type Basket,
   type Constraints,
   type Course,
   type SemesterKey,
@@ -21,6 +22,32 @@ type Feedback =
   | { kind: "unschedulable"; courses: Course[] }
   | { kind: "empty" }
   | { kind: "invalid" | "unavailable"; message: string };
+
+/** 조합에 쓴 결과와, 그 결과를 만든 입력. 입력이 바뀌었는지 렌더 중에 비교하려고 함께 들고 있는다. */
+interface Outcome {
+  signature: string;
+  result: GenerateResult | null;
+  feedback: Feedback | null;
+}
+
+/**
+ * 결과를 만들어낸 입력(바구니 구성·제약)의 지문. 이 값이 달라지면 화면에 남은 결과는 더 이상
+ * 지금 조건의 답이 아니다. 키 순서에 흔들리지 않도록 필요한 값만 순서대로 이어붙인다.
+ */
+function inputSignature(baskets: Basket[], constraints: Constraints): string {
+  const basketPart = baskets
+    .map((basket) => `${basket.id}:${basket.required ? 1 : 0}:${basket.courseIds.join(",")}`)
+    .join("|");
+  const { freeDays, avoidBefore, avoidAfter, minCredits, maxCredits } = constraints;
+  const constraintPart = [
+    freeDays.join(","),
+    avoidBefore ?? "",
+    avoidAfter ?? "",
+    minCredits ?? "",
+    maxCredits ?? "",
+  ].join("/");
+  return `${basketPart}#${constraintPart}`;
+}
 
 /** 결과가 0개일 때 무엇을 풀어야 할지 알려주려면 지금 걸린 제약을 그대로 보여줘야 한다. */
 function constraintLines(constraints: Constraints): string[] {
@@ -93,9 +120,8 @@ function FeedbackNotice({
 
 export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterKey | null }) {
   const { baskets, constraints, courses } = useBasket();
-  const [result, setResult] = useState<GenerateResult | null>(null);
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [index, setIndex] = useState(0);
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [pending, startTransition] = useTransition();
 
   const basketCourses = baskets.flatMap((basket) =>
@@ -104,21 +130,33 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
       .filter((course): course is Course => Boolean(course)),
   );
   const ready = basketCourses.length > 0 && semesterKey !== null;
+
+  /**
+   * 바구니나 제약이 바뀌면 지난 결과는 지금 조건의 답이 아니다. 렌더 중에 지문을 비교해 버리고,
+   * 왜 사라졌는지 안내한다. (`useEffect`로 지우면 낡은 보드가 한 프레임 남는다.)
+   */
+  const signature = inputSignature(baskets, constraints);
+  const stale = outcome !== null && outcome.signature !== signature;
+  const result = stale ? null : (outcome?.result ?? null);
+  const feedback = stale ? null : (outcome?.feedback ?? null);
   const candidate = result?.timetables[index] ?? null;
 
   const generate = () => {
-    setFeedback(null);
-
     /** 백엔드가 400으로 거절할 강좌는 담는 시점에 이미 알 수 있다. 부르지 않고 먼저 막는다. */
     const unschedulable = unschedulableCourses(basketCourses);
     if (unschedulable.length > 0) {
-      setResult(null);
-      setFeedback({ kind: "unschedulable", courses: unschedulable });
+      setOutcome({
+        signature,
+        result: null,
+        feedback: { kind: "unschedulable", courses: unschedulable },
+      });
       return;
     }
 
+    setOutcome(null);
+
     startTransition(async () => {
-      const outcome = await generateTimetables({
+      const generated = await generateTimetables({
         baskets: baskets.map((basket) => ({
           label: basket.label,
           required: basket.required,
@@ -128,28 +166,29 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
         limit: candidateLimit,
       });
 
-      if (!outcome.ok) {
-        setResult(null);
-        setFeedback(
-          outcome.kind === "unschedulable"
-            ? {
-                kind: "unschedulable",
-                courses: outcome.courses
-                  .map(({ id }) => courses[id])
-                  .filter((course): course is Course => Boolean(course)),
-              }
-            : { kind: outcome.kind, message: outcome.message },
-        );
+      if (!generated.ok) {
+        setOutcome({
+          signature,
+          result: null,
+          feedback:
+            generated.kind === "unschedulable"
+              ? {
+                  kind: "unschedulable",
+                  courses: generated.courses
+                    .map(({ id }) => courses[id])
+                    .filter((course): course is Course => Boolean(course)),
+                }
+              : { kind: generated.kind, message: generated.message },
+        });
         return;
       }
 
-      if (outcome.result.count === 0) {
-        setResult(null);
-        setFeedback({ kind: "empty" });
+      if (generated.result.count === 0) {
+        setOutcome({ signature, result: null, feedback: { kind: "empty" } });
         return;
       }
 
-      setResult(outcome.result);
+      setOutcome({ signature, result: generated.result, feedback: null });
       setIndex(0);
     });
   };
@@ -171,6 +210,8 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
             : `바구니 ${baskets.length}개 · 분반 ${basketCourses.length}개로 조합합니다.`}
         </p>
       </div>
+
+      {stale ? <Notice>조건이 바뀌었습니다. 다시 조합해주세요.</Notice> : null}
 
       {feedback ? <FeedbackNotice feedback={feedback} constraints={constraints} /> : null}
 
