@@ -1,22 +1,23 @@
 import type { SavedTimetable, TimetableShelf, Workspace } from "../contracts/timetable-shelf";
 import { isStale } from "../timetable/semester";
 import type { SemesterKey } from "../timetable/types";
+import { parseSavedTimetables, parseWorkspace } from "./workspace-validation";
 
 const version = 1;
 const workspaceKey = "shu-timetable:workspace";
 const savedKey = "shu-timetable:saved";
 
-interface Envelope<T> {
+interface Envelope {
   version: number;
-  data: T;
+  data: unknown;
 }
 
-function read<T>(key: string): T | null {
+function readData(key: string): unknown {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(key);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Envelope<T>;
+    const parsed = JSON.parse(raw) as Envelope;
     if (parsed.version !== version) return null;
     return parsed.data;
   } catch {
@@ -24,10 +25,10 @@ function read<T>(key: string): T | null {
   }
 }
 
-function write<T>(key: string, data: T): void {
+function write(key: string, data: unknown): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(key, JSON.stringify({ version, data } satisfies Envelope<T>));
+    window.localStorage.setItem(key, JSON.stringify({ version, data } satisfies Envelope));
   } catch {
     // 저장 공간이 없거나 접근이 막힌 경우. 화면은 계속 동작해야 한다.
   }
@@ -35,7 +36,7 @@ function write<T>(key: string, data: T): void {
 
 export class LocalTimetableShelf implements TimetableShelf {
   loadWorkspace(): Workspace | null {
-    return read<Workspace>(workspaceKey);
+    return parseWorkspace(readData(workspaceKey));
   }
 
   saveWorkspace(workspace: Workspace): void {
@@ -43,7 +44,7 @@ export class LocalTimetableShelf implements TimetableShelf {
   }
 
   listTimetables(): SavedTimetable[] {
-    return read<SavedTimetable[]>(savedKey) ?? [];
+    return parseSavedTimetables(readData(savedKey));
   }
 
   saveTimetable(timetable: SavedTimetable): void {
