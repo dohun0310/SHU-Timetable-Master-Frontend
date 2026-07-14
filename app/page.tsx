@@ -1,65 +1,124 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Suspense } from "react";
 
-export default function Home() {
+import { CourseList, CourseListSkeleton } from "@/components/search/course-list";
+import { Pagination } from "@/components/search/pagination";
+import { SearchFilters } from "@/components/search/search-filters";
+import { createCourseCatalog } from "@/lib/catalog";
+import type {
+  CatalogFilters,
+  CourseCatalog,
+  CoursePage,
+  CourseQuery,
+} from "@/lib/contracts/course-catalog";
+import { CatalogUnavailableError, InvalidQueryError } from "@/lib/contracts/errors";
+import { dropInvalidFields, invalidFieldLabel, parseCourseQuery } from "@/lib/search-params";
+
+function CatalogUnavailable() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="rounded-lg border border-zinc-200 bg-white p-10 text-center dark:border-zinc-800 dark:bg-zinc-900">
+      <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+        강좌 정보를 불러오지 못했습니다
+      </h2>
+      <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+        잠시 후 다시 시도해주세요. 저장한 시간표는 지금도 확인할 수 있습니다.
+      </p>
+      <Link
+        href="/my"
+        className="mt-4 inline-block rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+      >
+        내 시간표 보기
+      </Link>
+    </div>
+  );
+}
+
+interface SearchOutcome {
+  page: CoursePage | null;
+  droppedFields: string[];
+}
+
+/** 백엔드가 거절한 조건만 빼고 다시 검색한다. 화면 전체를 에러로 덮지 않는다. */
+async function searchDroppingInvalidFields(
+  catalog: CourseCatalog,
+  query: CourseQuery,
+): Promise<SearchOutcome> {
+  const droppedFields: string[] = [];
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const page = await catalog.search(dropInvalidFields(query, droppedFields));
+      return { page, droppedFields };
+    } catch (error) {
+      if (!(error instanceof InvalidQueryError)) throw error;
+      const next = error.issues.map((issue) => issue.field).filter((field) => field.length > 0);
+      if (next.length === 0) break;
+      droppedFields.push(...next);
+    }
+  }
+
+  return { page: null, droppedFields };
+}
+
+async function SearchResults({ query }: { query: CourseQuery }) {
+  const catalog = createCourseCatalog();
+
+  let page: CoursePage | null;
+  let droppedFields: string[];
+  try {
+    ({ page, droppedFields } = await searchDroppingInvalidFields(catalog, query));
+  } catch (error) {
+    if (error instanceof CatalogUnavailableError) return <CatalogUnavailable />;
+    throw error;
+  }
+
+  const droppedLabels = Array.from(new Set(droppedFields.map(invalidFieldLabel)));
+
+  if (!page) {
+    return (
+      <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        검색 조건이 올바르지 않아 결과를 불러오지 못했습니다. 조건을 초기화하고 다시 검색해주세요.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {droppedLabels.length > 0 ? (
+        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+          다음 조건은 사용할 수 없어 제외했습니다: {droppedLabels.join(", ")}
+        </p>
+      ) : null}
+      <CourseList page={page} />
+      <Pagination page={page.page} totalPages={page.totalPages} />
+    </div>
+  );
+}
+
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const query = parseCourseQuery(params);
+  const catalog = createCourseCatalog();
+
+  let filters: CatalogFilters | null = null;
+  try {
+    filters = (await catalog.meta()).filters;
+  } catch (error) {
+    if (!(error instanceof CatalogUnavailableError)) throw error;
+  }
+
+  if (!filters) return <CatalogUnavailable />;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SearchFilters filters={filters} />
+      <Suspense key={JSON.stringify(query)} fallback={<CourseListSkeleton />}>
+        <SearchResults query={query} />
+      </Suspense>
     </div>
   );
 }
