@@ -20,16 +20,26 @@ function many(params: RawParams, key: string): string[] | undefined {
   return list.length > 0 ? list : undefined;
 }
 
-function number(params: RawParams, key: string): number | undefined {
-  const raw = one(params, key);
-  if (raw === undefined) return undefined;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : undefined;
+export interface ParsedCourseQuery {
+  query: CourseQuery;
+  /** 숫자로 읽을 수 없어 백엔드에 넘기지 못한 파라미터. 다른 조건과 똑같이 안내한다. */
+  unreadableFields: string[];
 }
 
 /** 값의 타당성은 백엔드가 400으로 알려주므로 여기서는 형태만 맞춘다. */
-export function parseCourseQuery(params: RawParams): CourseQuery {
-  return {
+export function parseCourseQuery(params: RawParams): ParsedCourseQuery {
+  const unreadableFields: string[] = [];
+
+  const number = (key: string): number | undefined => {
+    const raw = one(params, key);
+    if (raw === undefined) return undefined;
+    const parsed = Number(raw);
+    if (Number.isFinite(parsed)) return parsed;
+    unreadableFields.push(key);
+    return undefined;
+  };
+
+  const query: CourseQuery = {
     q: one(params, "q"),
     categories: many(params, "category") as CourseCategory[] | undefined,
     departments: many(params, "department"),
@@ -38,12 +48,14 @@ export function parseCourseQuery(params: RawParams): CourseQuery {
     days: many(params, "day") as Weekday[] | undefined,
     startAfter: one(params, "startAfter"),
     endBefore: one(params, "endBefore"),
-    minCredits: number(params, "minCredits"),
-    maxCredits: number(params, "maxCredits"),
-    page: number(params, "page") ?? 1,
-    size: number(params, "size") ?? defaultPageSize,
+    minCredits: number("minCredits"),
+    maxCredits: number("maxCredits"),
+    page: number("page") ?? 1,
+    size: number("size") ?? defaultPageSize,
     sort: (one(params, "sort") as CourseSort | undefined) ?? "name",
   };
+
+  return { query, unreadableFields };
 }
 
 /** 백엔드가 알려준 필드 이름(단수형 파라미터 이름)을 `CourseQuery`의 키로 옮긴다. */

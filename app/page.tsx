@@ -63,9 +63,11 @@ async function searchDroppingInvalidFields(
 async function SearchResults({
   catalog,
   query,
+  unreadableFields,
 }: {
   catalog: CourseCatalog;
   query: CourseQuery;
+  unreadableFields: string[];
 }) {
   let page: CoursePage | null;
   let droppedFields: string[];
@@ -76,7 +78,9 @@ async function SearchResults({
     throw error;
   }
 
-  const droppedLabels = Array.from(new Set(droppedFields.map(invalidFieldLabel)));
+  const droppedLabels = Array.from(
+    new Set([...unreadableFields, ...droppedFields].map(invalidFieldLabel)),
+  );
 
   if (!page) {
     return (
@@ -105,7 +109,7 @@ export default async function SearchPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const query = parseCourseQuery(params);
+  const { query, unreadableFields } = parseCourseQuery(params);
   const catalog = createCourseCatalog();
 
   let filters: CatalogFilters | null = null;
@@ -121,7 +125,7 @@ export default async function SearchPage({
     <div className="flex flex-col gap-4">
       <SearchFilters filters={filters} />
       <Suspense key={JSON.stringify(query)} fallback={<CourseListSkeleton />}>
-        <SearchResults catalog={catalog} query={query} />
+        <SearchResults catalog={catalog} query={query} unreadableFields={unreadableFields} />
       </Suspense>
     </div>
   );
