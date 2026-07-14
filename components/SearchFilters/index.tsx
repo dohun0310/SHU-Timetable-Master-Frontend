@@ -75,6 +75,12 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
     }));
   };
 
+  /** 같은 선택이면 누른 순서와 무관하게 같은 URL이 나와야 공유·캐시가 흔들리지 않는다. */
+  const orderedCategories = filters.categories
+    .map((category) => category.id)
+    .filter((id) => chips.categories.includes(id));
+  const orderedDays = weekdays.filter((day) => chips.days.includes(day));
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -123,6 +129,7 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
 
   const handleReset = () => {
     setUnknownFields([]);
+    setChips({ urlKey: "", categories: [], days: [] });
     router.push("/");
   };
 
@@ -319,13 +326,14 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
                 key={category.id}
                 pressed={chips.categories.includes(category.id)}
                 onToggle={() => toggleChip("categories", category.id)}
+                label={`이수구분 ${category.label}`}
                 className="gap-1.5 px-2.5 py-1"
               >
                 {category.label} ({category.count})
               </ToggleChip>
             ))}
           </div>
-          {chips.categories.map((category) => (
+          {orderedCategories.map((category) => (
             <input key={category} type="hidden" name="category" value={category} />
           ))}
         </fieldset>
@@ -345,7 +353,7 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
               </ToggleChip>
             ))}
           </div>
-          {chips.days.map((day) => (
+          {orderedDays.map((day) => (
             <input key={day} type="hidden" name="day" value={day} />
           ))}
         </fieldset>
