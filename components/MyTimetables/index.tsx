@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { useBasket } from "@/components/BasketProvider";
+import ExportButtons from "@/components/ExportButtons";
 import SavedList from "@/components/SavedList";
 import TimetableBoard from "@/components/TimetableBoard";
 import type { SweepReport } from "@/lib/contracts/timetable-shelf";
@@ -67,6 +68,7 @@ export default function MyTimetables() {
               <div className="flex flex-col gap-2">
                 <h2 className="text-sm font-semibold">{opened.name}</h2>
                 <TimetableBoard courses={opened.courses} />
+                <ExportButtons courses={opened.courses} name={opened.name} />
               </div>
             ) : (
               <p className="rounded-lg border border-dashed border-gray-200 px-3 py-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">

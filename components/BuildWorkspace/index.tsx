@@ -8,6 +8,7 @@ import BasketPanel from "@/components/BasketPanel";
 import { useBasket } from "@/components/BasketProvider";
 import CandidateNav from "@/components/CandidateNav";
 import ConstraintsPanel from "@/components/ConstraintsPanel";
+import ExportButtons from "@/components/ExportButtons";
 import TimetableBoard from "@/components/TimetableBoard";
 import type { GenerateResult } from "@/lib/contracts/timetable-maker";
 import { conflictingCourseIds } from "@/lib/timetable/conflict";
@@ -332,6 +333,8 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
         ) : null}
 
         <TimetableBoard courses={boardCourses} onRemove={removeFromBoard} />
+
+        <ExportButtons courses={boardCourses} name={name.trim() || defaultName()} />
 
         <div className="flex flex-col gap-1.5">
           <div className="flex flex-wrap items-center gap-2">
