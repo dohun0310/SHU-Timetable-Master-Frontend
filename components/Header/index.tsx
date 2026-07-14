@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useBasket } from "@/components/BasketProvider";
 import { semesterLabels, type SemesterInfo } from "@/lib/timetable/types";
 
 const navigation = [
@@ -17,6 +18,7 @@ function isCurrent(pathname: string, href: string): boolean {
 
 export default function Header({ semester }: { semester: SemesterInfo | null }) {
   const pathname = usePathname();
+  const { baskets } = useBasket();
 
   return (
     <header className="bg-background/90 sticky top-0 z-20 border-b border-gray-100 backdrop-blur dark:border-gray-800">
@@ -43,11 +45,18 @@ export default function Header({ semester }: { semester: SemesterInfo | null }) 
             );
           })}
         </nav>
-        {semester ? (
-          <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
-            {semester.academicYear}학년도 {semesterLabels[semester.semester]}
-          </span>
-        ) : null}
+        <div className="ml-auto flex items-center gap-3">
+          {baskets.length > 0 ? (
+            <span className="bg-foreground text-background rounded-md px-2 py-0.5 text-xs font-medium">
+              바구니 {baskets.length}
+            </span>
+          ) : null}
+          {semester ? (
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {semester.academicYear}학년도 {semesterLabels[semester.semester]}
+            </span>
+          ) : null}
+        </div>
       </div>
     </header>
   );
