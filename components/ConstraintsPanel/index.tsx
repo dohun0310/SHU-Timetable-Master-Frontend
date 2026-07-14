@@ -128,7 +128,7 @@ export default function ConstraintsPanel() {
         <p
           id="constraint-credits-error"
           role="alert"
-          className="mt-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+          className="mt-2 rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200"
         >
           최소 학점이 최대 학점보다 큽니다. 범위를 다시 확인해주세요.
         </p>

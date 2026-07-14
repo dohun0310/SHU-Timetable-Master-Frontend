@@ -24,7 +24,7 @@ export default async function BuildPage() {
       <h1 className="text-lg font-semibold">시간표 만들기</h1>
 
       {semesterKey === null ? (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <p className="rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200">
           백엔드에 연결할 수 없어 자동 조합을 사용할 수 없습니다. 저장된 시간표는 내 시간표에서 볼
           수 있습니다.
         </p>

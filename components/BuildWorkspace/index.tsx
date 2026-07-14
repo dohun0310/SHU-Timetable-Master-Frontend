@@ -66,7 +66,7 @@ function Notice({ children }: { children: React.ReactNode }) {
   return (
     <div
       role="status"
-      className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+      className="rounded-lg border border-orange-300 bg-orange-50 p-3 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200"
     >
       {children}
     </div>

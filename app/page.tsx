@@ -82,7 +82,7 @@ async function SearchResults({
 
   if (!page) {
     return (
-      <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <p className="rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200">
         검색 조건이 올바르지 않아 결과를 불러오지 못했습니다. 조건을 초기화하고 다시 검색해주세요.
       </p>
     );
@@ -91,7 +91,7 @@ async function SearchResults({
   return (
     <div className="flex flex-col gap-4">
       {droppedLabels.length > 0 ? (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <p className="rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200">
           다음 조건은 사용할 수 없어 제외했습니다: {droppedLabels.join(", ")}
         </p>
       ) : null}

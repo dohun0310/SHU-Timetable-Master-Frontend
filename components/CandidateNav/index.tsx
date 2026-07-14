@@ -38,7 +38,7 @@ export default function CandidateNav({
       </div>
 
       {truncated ? (
-        <p className="mt-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <p className="mt-2 rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200">
           후보가 너무 많아 일부만 찾았습니다. 조건을 좁혀보세요.
         </p>
       ) : null}

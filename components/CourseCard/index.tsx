@@ -40,7 +40,7 @@ export default function CourseCard({ course }: { course: Course }) {
           </ul>
 
           {schedulable ? null : (
-            <p className="mt-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+            <p className="mt-2 rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200">
               강의시간 정보가 불완전해 자동 조합에 사용할 수 없습니다
             </p>
           )}

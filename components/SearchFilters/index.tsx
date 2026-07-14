@@ -123,7 +123,7 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
       {unknownFields.length > 0 ? (
         <p
           role="status"
-          className="mt-3 mb-3 text-xs text-amber-700 md:mt-0 dark:text-amber-300"
+          className="mt-3 mb-3 text-xs text-orange-700 md:mt-0 dark:text-orange-300"
         >
           목록에 없는 값이라 {unknownFields.join(", ")} 조건은 적용하지 않았습니다. 자동완성
           목록에서 골라주세요.
