@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { useBasket } from "@/components/BasketProvider";
+import type { SweepReport } from "@/lib/storage/shelf-capabilities";
 import { isSchedulable } from "@/lib/timetable/schedulability";
 import type { Basket, Course } from "@/lib/timetable/types";
 import { professorText, scheduleLines } from "@/lib/utils/course-format";
@@ -112,9 +113,20 @@ function BasketItem({ basket }: { basket: Basket }) {
   );
 }
 
+/** 정리된 대상에 맞는 문구만 내보낸다. 바구니가 멀쩡한데 정리했다고 하면 안 된다. */
+function sweptText(swept: SweepReport): string | null {
+  if (swept.workspace && swept.timetables) {
+    return "지난 학기의 바구니와 저장된 시간표를 정리했습니다.";
+  }
+  if (swept.workspace) return "지난 학기의 바구니라 정리했습니다.";
+  if (swept.timetables) return "지난 학기의 저장된 시간표를 정리했습니다.";
+  return null;
+}
+
 export default function BasketPanel() {
-  const { baskets, swept } = useBasket();
+  const { baskets, swept, canPersist } = useBasket();
   const requiredCount = baskets.filter((basket) => basket.required).length;
+  const sweptNotice = sweptText(swept);
 
   return (
     <section className="bg-foreground/5 rounded-lg border border-gray-100 p-4 dark:border-gray-800">
@@ -125,14 +137,23 @@ export default function BasketPanel() {
         </p>
       </div>
 
-      {swept ? (
+      {sweptNotice ? (
         <p
           role="status"
           className="mb-3 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
         >
-          지난 학기의 저장본이라 정리했습니다.
+          {sweptNotice}
         </p>
       ) : null}
+
+      {canPersist ? null : (
+        <p
+          role="status"
+          className="mb-3 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+        >
+          이 브라우저에서는 바구니가 저장되지 않습니다. 탭을 닫으면 사라집니다.
+        </p>
+      )}
 
       {baskets.length === 0 ? (
         <p className="rounded-md border border-dashed border-gray-200 px-3 py-6 text-center text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">

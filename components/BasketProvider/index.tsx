@@ -10,6 +10,11 @@ import {
 
 import type { TimetableShelf, Workspace } from "@/lib/contracts/timetable-shelf";
 import {
+  shelfCapabilitiesOf,
+  type ShelfCapabilities,
+  type SweepReport,
+} from "@/lib/storage/shelf-capabilities";
+import {
   emptyConstraints,
   type Basket,
   type Constraints,
@@ -21,8 +26,10 @@ interface BasketSnapshot {
   baskets: Basket[];
   constraints: Constraints;
   courses: Record<string, Course>;
-  /** 지난 학기 저장본을 정리했는지. 바구니가 왜 비었는지 사용자에게 알려주는 데 쓴다. */
-  swept: boolean;
+  /** 지난 학기 저장본을 무엇까지 정리했는지. 왜 비었는지 사용자에게 알려주는 데 쓴다. */
+  swept: SweepReport;
+  /** 이 브라우저에서 저장이 되는지. 사파리 프라이빗 모드 등에서는 false. */
+  canPersist: boolean;
 }
 
 interface BasketValue extends BasketSnapshot {
@@ -33,21 +40,25 @@ interface BasketValue extends BasketSnapshot {
   setConstraints(next: Constraints): void;
 }
 
+const noSweep: SweepReport = { workspace: false, timetables: false };
+
 const emptySnapshot: BasketSnapshot = {
   baskets: [],
   constraints: emptyConstraints,
   courses: {},
-  swept: false,
+  swept: noSweep,
+  canPersist: true,
 };
 
-/** localStorage는 사용자가 직접 고칠 수 있으므로 모양이 깨진 저장본도 빈 상태로 받아넘긴다. */
-function snapshotOf(workspace: Workspace | null, swept: boolean): BasketSnapshot {
-  if (!workspace) return { ...emptySnapshot, swept };
+function workspaceOf(workspace: Workspace | null): Pick<
+  BasketSnapshot,
+  "baskets" | "constraints" | "courses"
+> {
+  if (!workspace) return { baskets: [], constraints: emptyConstraints, courses: {} };
   return {
-    baskets: Array.isArray(workspace.baskets) ? workspace.baskets : [],
-    constraints: { ...emptyConstraints, ...workspace.constraints },
-    courses: typeof workspace.courses === "object" && workspace.courses ? workspace.courses : {},
-    swept,
+    baskets: workspace.baskets,
+    constraints: workspace.constraints,
+    courses: workspace.courses,
   };
 }
 
@@ -72,18 +83,24 @@ function pruneCourses(baskets: Basket[], courses: Record<string, Course>): Recor
 class BasketStore {
   private snapshot = emptySnapshot;
   private hydrated = false;
+  private unwatch: (() => void) | null = null;
   private readonly listeners = new Set<() => void>();
+  private readonly capabilities: ShelfCapabilities | null;
 
   constructor(
     private readonly shelf: TimetableShelf,
     private readonly semesterKey: SemesterKey | null,
-  ) {}
+  ) {
+    this.capabilities = shelfCapabilitiesOf(shelf);
+  }
 
   subscribe = (listener: () => void): (() => void) => {
     if (!this.hydrated) this.hydrate();
     this.listeners.add(listener);
+    if (this.listeners.size === 1) this.watch();
     return () => {
       this.listeners.delete(listener);
+      if (this.listeners.size === 0) this.stopWatching();
     };
   };
 
@@ -152,16 +169,45 @@ class BasketStore {
     this.commit({ constraints: next });
   };
 
+  /** 다른 탭이 저장한 내용을 이 탭 상태로 가져온다. 오래된 상태로 덮어써 잃는 것을 막는다. */
+  private reload = (): void => {
+    this.snapshot = { ...this.snapshot, ...workspaceOf(this.shelf.loadWorkspace()) };
+    this.emit();
+  };
+
+  private watch(): void {
+    if (this.unwatch || !this.capabilities) return;
+    this.unwatch = this.capabilities.watchExternalChange(this.reload);
+  }
+
+  private stopWatching(): void {
+    this.unwatch?.();
+    this.unwatch = null;
+  }
+
+  /** 만료 정리를 먼저 끝내야 지워진 저장본을 다시 읽어들이지 않는다. */
   private hydrate(): void {
     this.hydrated = true;
-    const swept = this.semesterKey === null ? false : this.shelf.sweepStale(this.semesterKey);
-    this.snapshot = snapshotOf(this.shelf.loadWorkspace(), swept);
+    const swept = this.sweep();
+    this.snapshot = {
+      ...workspaceOf(this.shelf.loadWorkspace()),
+      swept,
+      canPersist: this.capabilities?.canPersist() ?? true,
+    };
+  }
+
+  /** 학기를 모르면(백엔드 다운) 만료를 판정할 수 없으므로 아무것도 지우지 않는다. */
+  private sweep(): SweepReport {
+    if (this.semesterKey === null) return noSweep;
+    if (this.capabilities) return this.capabilities.sweepStaleReport(this.semesterKey);
+    const swept = this.shelf.sweepStale(this.semesterKey);
+    return { workspace: swept, timetables: swept };
   }
 
   private commit(change: Partial<BasketSnapshot>): void {
     this.snapshot = { ...this.snapshot, ...change };
     this.persist();
-    for (const listener of this.listeners) listener();
+    this.emit();
   }
 
   /** 학기를 모르는 채 저장하면 나중에 만료를 판정할 수 없다. */
@@ -169,6 +215,14 @@ class BasketStore {
     if (this.semesterKey === null) return;
     const { baskets, constraints, courses } = this.snapshot;
     this.shelf.saveWorkspace({ semesterKey: this.semesterKey, baskets, constraints, courses });
+    const canPersist = this.capabilities?.canPersist() ?? true;
+    if (canPersist !== this.snapshot.canPersist) {
+      this.snapshot = { ...this.snapshot, canPersist };
+    }
+  }
+
+  private emit(): void {
+    for (const listener of this.listeners) listener();
   }
 }
 
