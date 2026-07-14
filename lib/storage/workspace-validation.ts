@@ -1,5 +1,19 @@
 import type { SavedTimetable, Workspace } from "../contracts/timetable-shelf";
-import { emptyConstraints, type Basket, type Constraints, type Course } from "../timetable/types";
+import {
+  emptyConstraints,
+  weekdays,
+  type Basket,
+  type Constraints,
+  type Course,
+  type ParseStatus,
+} from "../timetable/types";
+
+const parseStatuses: readonly ParseStatus[] = [
+  "PARSED",
+  "PARTIALLY_PARSED",
+  "UNPARSED",
+  "NO_SCHEDULE",
+];
 
 /**
  * localStorage는 사용자가 직접 고칠 수 있고 예전 버전이 남길 수도 있다.
@@ -23,13 +37,29 @@ function isNullableNumber(value: unknown): boolean {
   return value === null || typeof value === "number";
 }
 
+function isWeekday(value: unknown): boolean {
+  return typeof value === "string" && (weekdays as readonly string[]).includes(value);
+}
+
 function isMeeting(value: unknown): boolean {
   return (
     isRecord(value) &&
-    typeof value.day === "string" &&
+    isWeekday(value.day) &&
     typeof value.startPeriod === "number" &&
     typeof value.endPeriod === "number"
   );
+}
+
+function isOrganization(value: unknown): boolean {
+  return isRecord(value) && typeof value.id === "string" && typeof value.name === "string";
+}
+
+function isDepartment(value: unknown): boolean {
+  return value === null || isOrganization(value);
+}
+
+function isParseStatus(value: unknown): boolean {
+  return typeof value === "string" && (parseStatuses as readonly string[]).includes(value);
 }
 
 function isCourse(value: unknown): value is Course {
@@ -41,9 +71,11 @@ function isCourse(value: unknown): value is Course {
     typeof value.courseCode === "string" &&
     typeof value.classNumber === "string" &&
     typeof value.credits === "number" &&
+    isDepartment(value.department) &&
     isStringArray(value.professors) &&
     isRecord(schedule) &&
     typeof schedule.raw === "string" &&
+    isParseStatus(schedule.parseStatus) &&
     Array.isArray(schedule.meetings) &&
     schedule.meetings.every(isMeeting)
   );
@@ -55,7 +87,8 @@ function isBasket(value: unknown): value is Basket {
     typeof value.id === "string" &&
     typeof value.label === "string" &&
     typeof value.required === "boolean" &&
-    isStringArray(value.courseIds)
+    isStringArray(value.courseIds) &&
+    value.courseIds.length > 0
   );
 }
 
@@ -74,12 +107,18 @@ function isConstraints(value: unknown): value is Constraints {
   );
 }
 
+/** 바구니가 가리키는 모든 courseId가 courses에 실제로 존재해야 한다. 유령 바구니는 통째로 버린다. */
+function hasConsistentReferences(baskets: Basket[], courses: Record<string, Course>): boolean {
+  return baskets.every((basket) => basket.courseIds.every((courseId) => courseId in courses));
+}
+
 /** 모양이 어긋나면 null. 조합 조건만 어긋나면 빈 조건으로 대체하고 바구니는 살린다. */
 export function parseWorkspace(value: unknown): Workspace | null {
   if (!isRecord(value)) return null;
   if (typeof value.semesterKey !== "string") return null;
   if (!Array.isArray(value.baskets) || !value.baskets.every(isBasket)) return null;
   if (!isCourseMap(value.courses)) return null;
+  if (!hasConsistentReferences(value.baskets, value.courses)) return null;
 
   return {
     semesterKey: value.semesterKey,
