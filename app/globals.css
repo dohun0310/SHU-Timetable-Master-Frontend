@@ -121,18 +121,6 @@
   --breakpoint-sm: 39.625rem;
   --breakpoint-md: 42.125rem;
   --breakpoint-lg: 60.25rem;
-
-  @keyframes slide {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  --animate-slide: slide 0.3s ease-out;
 }
 
 body {
