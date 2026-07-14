@@ -55,8 +55,14 @@ export class LocalTimetableShelf implements TimetableShelf {
     this.write(workspaceKey, workspace);
   }
 
+  /** 저장본이 깨져 걸러졌으면(참조가 달라짐) 정리된 값으로 곧장 되써서 쓰레기를 남기지 않는다. */
   listTimetables(): SavedTimetable[] {
-    return parseSavedTimetables(readData(savedKey));
+    const raw = readData(savedKey);
+    const parsed = parseSavedTimetables(raw);
+    if (raw !== null && raw !== parsed) {
+      this.write(savedKey, parsed);
+    }
+    return parsed;
   }
 
   saveTimetable(timetable: SavedTimetable): void {
