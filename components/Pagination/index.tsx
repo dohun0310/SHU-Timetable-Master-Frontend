@@ -17,6 +17,9 @@ export default function Pagination({ page, totalPages }: { page: number; totalPa
 
   if (totalPages <= 1) return null;
 
+  /** 범위를 벗어난 `?page=` 값도 있는 페이지처럼 보여준다. */
+  const current = Math.min(Math.max(page, 1), totalPages);
+
   const goTo = (next: number) => {
     const params = new URLSearchParams(searchParams.toString());
     if (next <= 1) params.delete("page");
@@ -35,17 +38,17 @@ export default function Pagination({ page, totalPages }: { page: number; totalPa
       <button
         type="button"
         className={buttonClass(false)}
-        disabled={page <= 1}
-        onClick={() => goTo(page - 1)}
+        disabled={current <= 1}
+        onClick={() => goTo(current - 1)}
       >
         이전
       </button>
-      {pageWindow(page, totalPages).map((target) => (
+      {pageWindow(current, totalPages).map((target) => (
         <button
           key={target}
           type="button"
-          aria-current={target === page ? "page" : undefined}
-          className={buttonClass(target === page)}
+          aria-current={target === current ? "page" : undefined}
+          className={buttonClass(target === current)}
           onClick={() => goTo(target)}
         >
           {target}
@@ -54,13 +57,13 @@ export default function Pagination({ page, totalPages }: { page: number; totalPa
       <button
         type="button"
         className={buttonClass(false)}
-        disabled={page >= totalPages}
-        onClick={() => goTo(page + 1)}
+        disabled={current >= totalPages}
+        onClick={() => goTo(current + 1)}
       >
         다음
       </button>
       <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
-        {page} / {totalPages}
+        {current} / {totalPages}
       </span>
     </nav>
   );
