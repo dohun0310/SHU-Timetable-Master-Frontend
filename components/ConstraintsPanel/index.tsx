@@ -4,7 +4,7 @@ import { useBasket } from "@/components/BasketProvider";
 import { weekdayLabels, weekdays, type Weekday } from "@/lib/timetable/types";
 
 const fieldClass =
-  "bg-background w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700";
+  "bg-background w-full appearance-none rounded-md border border-gray-200 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700";
 const labelClass = "mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400";
 
 /** 공강일은 주말을 뺀 월~금만 고른다. */

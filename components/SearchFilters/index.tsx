@@ -24,7 +24,7 @@ function useLabelIndex(options: CatalogFilter[]) {
 }
 
 function fieldClass(): string {
-  return "bg-background w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700";
+  return "bg-background w-full appearance-none rounded-md border border-gray-200 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700";
 }
 
 function labelClass(): string {
