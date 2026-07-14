@@ -3,10 +3,13 @@
 import { useState, useTransition } from "react";
 
 import { generateTimetables } from "@/app/build/actions";
+import BasketPanel from "@/components/BasketPanel";
 import { useBasket } from "@/components/BasketProvider";
 import CandidateNav from "@/components/CandidateNav";
+import ConstraintsPanel from "@/components/ConstraintsPanel";
 import TimetableBoard from "@/components/TimetableBoard";
 import type { GenerateResult } from "@/lib/contracts/timetable-maker";
+import { conflictingCourseIds } from "@/lib/timetable/conflict";
 import { unschedulableCourses } from "@/lib/timetable/schedulability";
 import {
   weekdayLabels,
@@ -127,6 +130,7 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
   const { baskets, constraints, courses } = useBasket();
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [index, setIndex] = useState(0);
+  const [boardCourseIds, setBoardCourseIds] = useState<string[]>([]);
   const [pending, startTransition] = useTransition();
 
   const basketCourses = baskets.flatMap((basket) =>
@@ -137,14 +141,63 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
   const ready = basketCourses.length > 0 && semesterKey !== null;
 
   /**
-   * 바구니나 제약이 바뀌면 지난 결과는 지금 조건의 답이 아니다. 렌더 중에 지문을 비교해 버리고,
-   * 왜 사라졌는지 안내한다. (`useEffect`로 지우면 낡은 보드가 한 프레임 남는다.)
+   * 바구니나 제약이 바뀌면 지난 후보 목록은 지금 조건의 답이 아니다. 렌더 중에 지문을 비교해
+   * 버린다. (`useEffect`로 지우면 낡은 후보가 한 프레임 남는다.) 보드는 지우지 않는다 —
+   * 제약은 후보를 찾는 조건일 뿐이고, 보드는 사용자가 만들고 있는 시간표다.
    */
   const signature = inputSignature(baskets, constraints);
   const stale = outcome !== null && outcome.signature !== signature;
   const result = stale ? null : (outcome?.result ?? null);
   const feedback = stale ? null : (outcome?.feedback ?? null);
   const candidate = result?.timetables[index] ?? null;
+
+  /**
+   * 바구니에서 빠진 강좌는 스냅샷이 없으니 보드에도 있을 수 없다. 걸러 두기만 하면 다른 탭에서
+   * 같은 강좌를 다시 담았을 때 보드에 되살아나므로, 죽은 id는 상태에서도 지운다.
+   */
+  const liveBoardCourseIds = boardCourseIds.filter((courseId) => Boolean(courses[courseId]));
+  if (liveBoardCourseIds.length !== boardCourseIds.length) {
+    setBoardCourseIds(liveBoardCourseIds);
+  }
+
+  const boardCourses = liveBoardCourseIds
+    .map((courseId) => courses[courseId])
+    .filter((course): course is Course => Boolean(course));
+  const conflicted = conflictingCourseIds(boardCourses);
+
+  /** 후보와 보드가 어긋나면 손으로 고쳤다는 뜻이다. 후보를 넘기면 그 편집이 덮인다고 미리 알린다. */
+  const edited =
+    candidate !== null &&
+    (candidate.courses.length !== boardCourses.length ||
+      candidate.courses.some((course) => !liveBoardCourseIds.includes(course.id)));
+
+  const showCandidate = (nextIndex: number, from: GenerateResult) => {
+    const next = from.timetables[nextIndex];
+    if (!next) return;
+    setIndex(nextIndex);
+    setBoardCourseIds(next.courses.map((course) => course.id));
+  };
+
+  /**
+   * 한 과목은 분반 하나만 듣는다. 이미 올려 둔 분반이 있는 과목의 다른 분반을 넣으면 갈아끼운다.
+   * 시간이 겹치지 않는 분반 둘을 함께 올려두면 충돌로도 잡히지 않아 학점만 두 배가 된다.
+   */
+  const togglePlace = (courseId: string) => {
+    const target = courses[courseId];
+    if (!target) return;
+
+    setBoardCourseIds((current) => {
+      if (current.includes(courseId)) {
+        return current.filter((placed) => placed !== courseId);
+      }
+      const others = current.filter((placed) => courses[placed]?.courseCode !== target.courseCode);
+      return [...others, courseId];
+    });
+  };
+
+  const removeFromBoard = (courseId: string) => {
+    setBoardCourseIds((current) => current.filter((placed) => placed !== courseId));
+  };
 
   const generate = () => {
     /** 백엔드가 400으로 거절할 강좌는 담는 시점에 이미 알 수 있다. 부르지 않고 먼저 막는다. */
@@ -194,57 +247,78 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
       }
 
       setOutcome({ signature, result: generated.result, feedback: null });
-      setIndex(0);
+      showCandidate(0, generated.result);
     });
   };
 
+  const confirmBlockedReason =
+    boardCourses.length === 0
+      ? "보드에 강좌를 넣어야 확정할 수 있습니다."
+      : conflicted.size > 0
+        ? "겹치는 강좌가 있어 확정할 수 없습니다. 겹치는 강좌를 빼주세요."
+        : "시간표 저장은 곧 열립니다.";
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={generate}
-          disabled={!ready || pending}
-          className="bg-foreground text-background enabled:hover:bg-foreground/85 rounded-md px-4 py-2 text-sm font-medium disabled:bg-gray-200 disabled:text-gray-500 dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
-        >
-          {pending ? "조합하는 중..." : "자동 조합"}
-        </button>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {basketCourses.length === 0
-            ? "강좌 찾기에서 듣고 싶은 강좌를 바구니에 담아주세요."
-            : `바구니 ${baskets.length}개 · 분반 ${basketCourses.length}개로 조합합니다.`}
-        </p>
-      </div>
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[19rem_1fr]">
+      <aside className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
+        <BasketPanel onPlace={togglePlace} placedCourseIds={liveBoardCourseIds} />
+        <ConstraintsPanel />
+      </aside>
 
-      {stale ? <Notice>조건이 바뀌었습니다. 다시 조합해주세요.</Notice> : null}
+      <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={generate}
+            disabled={!ready || pending}
+            className="bg-foreground text-background enabled:hover:bg-foreground/85 rounded-md px-4 py-2 text-sm font-medium disabled:bg-gray-200 disabled:text-gray-500 dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
+          >
+            {pending ? "조합하는 중..." : "자동 조합"}
+          </button>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {basketCourses.length === 0
+              ? "강좌 찾기에서 듣고 싶은 강좌를 바구니에 담아주세요."
+              : `바구니 ${baskets.length}개 · 분반 ${basketCourses.length}개로 조합합니다. 바구니에서 직접 보드에 넣어 만들 수도 있습니다.`}
+          </p>
+        </div>
 
-      {feedback ? <FeedbackNotice feedback={feedback} constraints={constraints} /> : null}
+        {stale ? (
+          <Notice>조건이 바뀌었습니다. 보드는 그대로 두었으니 필요하면 다시 조합해주세요.</Notice>
+        ) : null}
 
-      {result ? (
-        <CandidateNav
-          index={index}
-          total={result.timetables.length}
-          truncated={result.truncated}
-          onPrev={() => setIndex((current) => Math.max(0, current - 1))}
-          onNext={() =>
-            setIndex((current) => Math.min(result.timetables.length - 1, current + 1))
-          }
-        />
-      ) : null}
+        {feedback ? <FeedbackNotice feedback={feedback} constraints={constraints} /> : null}
 
-      <TimetableBoard courses={candidate?.courses ?? []} />
+        {result ? (
+          <>
+            <CandidateNav
+              index={index}
+              total={result.timetables.length}
+              truncated={result.truncated}
+              onPrev={() => showCandidate(Math.max(0, index - 1), result)}
+              onNext={() =>
+                showCandidate(Math.min(result.timetables.length - 1, index + 1), result)
+              }
+            />
+            {edited ? (
+              <Notice>
+                손으로 고친 시간표입니다. 후보를 넘기면 이 내용이 그 후보로 바뀝니다.
+              </Notice>
+            ) : null}
+          </>
+        ) : null}
 
-      <div>
-        <button
-          type="button"
-          disabled
-          className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-400 dark:border-gray-700 dark:text-gray-600"
-        >
-          이 시간표로 확정
-        </button>
-        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-          시간표 저장은 곧 열립니다.
-        </p>
+        <TimetableBoard courses={boardCourses} onRemove={removeFromBoard} />
+
+        <div>
+          <button
+            type="button"
+            disabled
+            className="rounded-md border border-gray-200 px-4 py-2 text-sm font-medium text-gray-400 dark:border-gray-700 dark:text-gray-600"
+          >
+            이 시간표로 확정
+          </button>
+          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{confirmBlockedReason}</p>
+        </div>
       </div>
     </div>
   );

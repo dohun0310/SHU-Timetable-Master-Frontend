@@ -1,6 +1,4 @@
-import BasketPanel from "@/components/BasketPanel";
 import BuildWorkspace from "@/components/BuildWorkspace";
-import ConstraintsPanel from "@/components/ConstraintsPanel";
 import { createCourseCatalog } from "@/lib/catalog";
 import { CatalogUnavailableError } from "@/lib/contracts/errors";
 import { semesterKeyOf } from "@/lib/timetable/semester";
@@ -30,15 +28,7 @@ export default async function BuildPage() {
         </p>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[19rem_1fr]">
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
-          <BasketPanel />
-          <ConstraintsPanel />
-        </aside>
-        <div className="min-w-0">
-          <BuildWorkspace semesterKey={semesterKey} />
-        </div>
-      </div>
+      <BuildWorkspace semesterKey={semesterKey} />
     </div>
   );
 }

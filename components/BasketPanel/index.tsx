@@ -12,9 +12,13 @@ import { cn } from "@/lib/utils/cn";
 function BasketSection({
   course,
   onRemove,
+  onPlace,
+  placed,
 }: {
   course: Course;
   onRemove: () => void;
+  onPlace?: (courseId: string) => void;
+  placed?: boolean;
 }) {
   return (
     <li className="bg-background rounded border border-gray-100 px-2.5 py-2 dark:border-gray-800">
@@ -27,14 +31,31 @@ function BasketSection({
             {scheduleLines(course).join(" / ")}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={`${course.name} ${course.classNumber}분반 빼기`}
-          className="hover:bg-foreground/10 shrink-0 rounded px-1.5 py-0.5 text-xs text-gray-500 dark:text-gray-400"
-        >
-          빼기
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          {onPlace ? (
+            <button
+              type="button"
+              onClick={() => onPlace(course.id)}
+              aria-pressed={placed}
+              className={cn(
+                "rounded px-1.5 py-0.5 text-xs font-medium",
+                placed
+                  ? "bg-foreground text-background"
+                  : "border border-gray-200 dark:border-gray-700",
+              )}
+            >
+              {placed ? "보드에서 빼기" : "보드에 넣기"}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`${course.name} ${course.classNumber}분반 빼기`}
+            className="hover:bg-foreground/10 rounded px-1.5 py-0.5 text-xs text-gray-500 dark:text-gray-400"
+          >
+            빼기
+          </button>
+        </div>
       </div>
       {isSchedulable(course) ? null : (
         <p className="mt-1.5 rounded border border-orange-300 bg-orange-50 px-1.5 py-0.5 text-2xs text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200">
@@ -52,7 +73,15 @@ function subjectText(sections: Course[]): string {
   return [first.courseCode, first.department?.name].filter(Boolean).join(" · ");
 }
 
-function BasketItem({ basket }: { basket: Basket }) {
+function BasketItem({
+  basket,
+  onPlace,
+  placedCourseIds,
+}: {
+  basket: Basket;
+  onPlace?: (courseId: string) => void;
+  placedCourseIds?: string[];
+}) {
   const { courses, removeBasket, removeCourse, toggleRequired } = useBasket();
   const [open, setOpen] = useState(false);
   const sections = basket.courseIds
@@ -119,6 +148,8 @@ function BasketItem({ basket }: { basket: Basket }) {
               key={course.id}
               course={course}
               onRemove={() => removeCourse(basket.id, course.id)}
+              onPlace={onPlace}
+              placed={placedCourseIds?.includes(course.id)}
             />
           ))}
         </ul>
@@ -137,7 +168,17 @@ function sweptText(swept: SweepReport): string | null {
   return null;
 }
 
-export default function BasketPanel() {
+/**
+ * 바구니는 보드의 존재를 모른다. 보드에 넣고 빼는 일은 콜백으로만 알리고, 지금 보드에 놓인
+ * 강좌가 무엇인지도 목록으로 받아 표시만 한다.
+ */
+export default function BasketPanel({
+  onPlace,
+  placedCourseIds,
+}: {
+  onPlace?: (courseId: string) => void;
+  placedCourseIds?: string[];
+}) {
   const { baskets, swept, canPersist } = useBasket();
   const requiredCount = baskets.filter((basket) => basket.required).length;
   const sweptNotice = sweptText(swept);
@@ -176,7 +217,12 @@ export default function BasketPanel() {
       ) : (
         <ul className="flex flex-col gap-2">
           {baskets.map((basket) => (
-            <BasketItem key={basket.id} basket={basket} />
+            <BasketItem
+              key={basket.id}
+              basket={basket}
+              onPlace={onPlace}
+              placedCourseIds={placedCourseIds}
+            />
           ))}
         </ul>
       )}
