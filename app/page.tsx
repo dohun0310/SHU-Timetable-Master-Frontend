@@ -60,9 +60,13 @@ async function searchDroppingInvalidFields(
   return { page: null, droppedFields };
 }
 
-async function SearchResults({ query }: { query: CourseQuery }) {
-  const catalog = createCourseCatalog();
-
+async function SearchResults({
+  catalog,
+  query,
+}: {
+  catalog: CourseCatalog;
+  query: CourseQuery;
+}) {
   let page: CoursePage | null;
   let droppedFields: string[];
   try {
@@ -117,7 +121,7 @@ export default async function SearchPage({
     <div className="flex flex-col gap-4">
       <SearchFilters filters={filters} />
       <Suspense key={JSON.stringify(query)} fallback={<CourseListSkeleton />}>
-        <SearchResults query={query} />
+        <SearchResults catalog={catalog} query={query} />
       </Suspense>
     </div>
   );
