@@ -151,8 +151,16 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
   const feedback = stale ? null : (outcome?.feedback ?? null);
   const candidate = result?.timetables[index] ?? null;
 
-  /** 바구니에서 빠진 강좌는 스냅샷이 없으니 보드에도 남을 수 없다. 그릴 때 자연히 걸러진다. */
-  const boardCourses = boardCourseIds
+  /**
+   * 바구니에서 빠진 강좌는 스냅샷이 없으니 보드에도 있을 수 없다. 걸러 두기만 하면 다른 탭에서
+   * 같은 강좌를 다시 담았을 때 보드에 되살아나므로, 죽은 id는 상태에서도 지운다.
+   */
+  const liveBoardCourseIds = boardCourseIds.filter((courseId) => Boolean(courses[courseId]));
+  if (liveBoardCourseIds.length !== boardCourseIds.length) {
+    setBoardCourseIds(liveBoardCourseIds);
+  }
+
+  const boardCourses = liveBoardCourseIds
     .map((courseId) => courses[courseId])
     .filter((course): course is Course => Boolean(course));
   const conflicted = conflictingCourseIds(boardCourses);
@@ -161,7 +169,7 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
   const edited =
     candidate !== null &&
     (candidate.courses.length !== boardCourses.length ||
-      candidate.courses.some((course) => !boardCourseIds.includes(course.id)));
+      candidate.courses.some((course) => !liveBoardCourseIds.includes(course.id)));
 
   const showCandidate = (nextIndex: number, from: GenerateResult) => {
     const next = from.timetables[nextIndex];
@@ -170,12 +178,21 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
     setBoardCourseIds(next.courses.map((course) => course.id));
   };
 
+  /**
+   * 한 과목은 분반 하나만 듣는다. 이미 올려 둔 분반이 있는 과목의 다른 분반을 넣으면 갈아끼운다.
+   * 시간이 겹치지 않는 분반 둘을 함께 올려두면 충돌로도 잡히지 않아 학점만 두 배가 된다.
+   */
   const togglePlace = (courseId: string) => {
-    setBoardCourseIds((current) =>
-      current.includes(courseId)
-        ? current.filter((placed) => placed !== courseId)
-        : [...current, courseId],
-    );
+    const target = courses[courseId];
+    if (!target) return;
+
+    setBoardCourseIds((current) => {
+      if (current.includes(courseId)) {
+        return current.filter((placed) => placed !== courseId);
+      }
+      const others = current.filter((placed) => courses[placed]?.courseCode !== target.courseCode);
+      return [...others, courseId];
+    });
   };
 
   const removeFromBoard = (courseId: string) => {
@@ -244,7 +261,7 @@ export default function BuildWorkspace({ semesterKey }: { semesterKey: SemesterK
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[19rem_1fr]">
       <aside className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
-        <BasketPanel onPlace={togglePlace} placedCourseIds={boardCourseIds} />
+        <BasketPanel onPlace={togglePlace} placedCourseIds={liveBoardCourseIds} />
         <ConstraintsPanel />
       </aside>
 
