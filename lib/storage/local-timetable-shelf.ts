@@ -4,8 +4,9 @@ import type { SemesterKey } from "../timetable/types";
 import { parseSavedTimetables, parseWorkspace } from "./workspace-validation";
 
 const version = 1;
-const workspaceKey = "shu-timetable:workspace";
-const savedKey = "shu-timetable:saved";
+const keyPrefix = "shu-timetable:";
+const workspaceKey = `${keyPrefix}workspace`;
+const savedKey = `${keyPrefix}saved`;
 
 interface Envelope {
   version: number;
@@ -31,6 +32,18 @@ function write(key: string, data: unknown): void {
     window.localStorage.setItem(key, JSON.stringify({ version, data } satisfies Envelope));
   } catch {
     // 저장 공간이 없거나 접근이 막힌 경우. 화면은 계속 동작해야 한다.
+  }
+}
+
+/** 저장본이 깨져 화면이 터졌을 때 사용자가 스스로 빠져나오는 유일한 길. */
+export function clearStoredData(): void {
+  if (typeof window === "undefined") return;
+  try {
+    for (const key of Object.keys(window.localStorage)) {
+      if (key.startsWith(keyPrefix)) window.localStorage.removeItem(key);
+    }
+  } catch {
+    // 접근 자체가 막힌 경우. 지울 것도 없다.
   }
 }
 
