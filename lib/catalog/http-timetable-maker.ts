@@ -5,7 +5,17 @@ import type {
   GenerateResult,
   TimetableMaker,
 } from "../contracts/timetable-maker";
+import type { Timetable } from "../timetable/types";
 import { backendPost } from "./backend-client";
+import { toCourse, type BackendCourse } from "./course-mapper";
+
+interface BackendTimetable extends Omit<Timetable, "courses"> {
+  courses: BackendCourse[];
+}
+
+interface BackendGenerateResult extends Omit<GenerateResult, "timetables"> {
+  timetables: BackendTimetable[];
+}
 
 function toPayload(request: GenerateRequest): unknown {
   const { constraints } = request;
@@ -35,6 +45,16 @@ function toPayload(request: GenerateRequest): unknown {
 
 export class HttpTimetableMaker implements TimetableMaker {
   async generate(request: GenerateRequest): Promise<GenerateResult> {
-    return backendPost<GenerateResult>("/api/timetables/generate", toPayload(request));
+    const result = await backendPost<BackendGenerateResult>(
+      "/api/timetables/generate",
+      toPayload(request),
+    );
+    return {
+      ...result,
+      timetables: result.timetables.map((timetable) => ({
+        ...timetable,
+        courses: timetable.courses.map(toCourse),
+      })),
+    };
   }
 }

@@ -8,10 +8,15 @@ import type {
 } from "../contracts/course-catalog";
 import type { Course, SemesterInfo } from "../timetable/types";
 import { backendGet, NotFoundError } from "./backend-client";
+import { toCourse, type BackendCourse } from "./course-mapper";
 
 interface MetaResponse {
   meta: { academicYear: number; semester: SemesterInfo["semester"]; courseCount: number };
   filters: CatalogMeta["filters"];
+}
+
+interface BackendCoursePage extends Omit<CoursePage, "courses"> {
+  courses: BackendCourse[];
 }
 
 function toSearchParams(query: CourseQuery): string {
@@ -43,12 +48,17 @@ function toSearchParams(query: CourseQuery): string {
 
 export class HttpCourseCatalog implements CourseCatalog {
   async search(query: CourseQuery): Promise<CoursePage> {
-    return backendGet<CoursePage>(`/api/courses${toSearchParams(query)}`, 300);
+    const page = await backendGet<BackendCoursePage>(
+      `/api/courses${toSearchParams(query)}`,
+      300,
+    );
+    return { ...page, courses: page.courses.map(toCourse) };
   }
 
   async findById(id: string): Promise<Course | null> {
     try {
-      return await backendGet<Course>(`/api/courses/${encodeURIComponent(id)}`, 300);
+      const raw = await backendGet<BackendCourse>(`/api/courses/${encodeURIComponent(id)}`, 300);
+      return toCourse(raw);
     } catch (error) {
       if (error instanceof NotFoundError) return null;
       throw error;
