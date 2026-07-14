@@ -40,7 +40,11 @@ interface BasketValue extends BasketSnapshot {
   removeCourse(basketId: string, courseId: string): void;
   removeBasket(id: string): void;
   toggleRequired(id: string): void;
-  setConstraints(next: Constraints): void;
+  /**
+   * 갱신 함수를 받는다. 렌더 시점의 제약을 바깥에서 읽어 통째로 덮으면, 다시 렌더되기 전에
+   * 두 번 조작했을 때 나중 호출이 앞선 변경을 모르는 값으로 덮어써 버린다.
+   */
+  setConstraints(update: (previous: Constraints) => Constraints): void;
   saveTimetable(name: string, courses: Course[]): void;
   removeTimetable(id: string): void;
 }
@@ -168,8 +172,9 @@ class BasketStore {
     });
   };
 
-  setConstraints = (next: Constraints): void => {
-    this.commit({ constraints: next });
+  /** 항상 최신 스냅샷을 기준으로 계산한다. 연타해도 앞선 변경이 사라지지 않는다. */
+  setConstraints = (update: (previous: Constraints) => Constraints): void => {
+    this.commit({ constraints: update(this.snapshot.constraints) });
   };
 
   /**
