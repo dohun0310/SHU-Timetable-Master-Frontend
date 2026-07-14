@@ -8,7 +8,12 @@ import {
   type ReactNode,
 } from "react";
 
-import type { SweepReport, TimetableShelf, Workspace } from "@/lib/contracts/timetable-shelf";
+import type {
+  SavedTimetable,
+  SweepReport,
+  TimetableShelf,
+  Workspace,
+} from "@/lib/contracts/timetable-shelf";
 import {
   emptyConstraints,
   type Basket,
@@ -16,11 +21,14 @@ import {
   type Course,
   type SemesterKey,
 } from "@/lib/timetable/types";
+import { createId } from "@/lib/utils/id";
 
 interface BasketSnapshot {
   baskets: Basket[];
   constraints: Constraints;
   courses: Record<string, Course>;
+  /** 확정해 둔 시간표들. 바구니와 같은 저장소에 있으므로 같은 스토어가 들고 있는다. */
+  timetables: SavedTimetable[];
   /** 지난 학기 저장본을 무엇까지 정리했는지. 왜 비었는지 사용자에게 알려주는 데 쓴다. */
   swept: SweepReport;
   /** 이 브라우저에서 저장이 되는지. 사파리 프라이빗 모드 등에서는 false. */
@@ -33,6 +41,8 @@ interface BasketValue extends BasketSnapshot {
   removeBasket(id: string): void;
   toggleRequired(id: string): void;
   setConstraints(next: Constraints): void;
+  saveTimetable(name: string, courses: Course[]): void;
+  removeTimetable(id: string): void;
 }
 
 const noSweep: SweepReport = { workspace: false, timetables: false };
@@ -41,6 +51,7 @@ const emptySnapshot: BasketSnapshot = {
   baskets: [],
   constraints: emptyConstraints,
   courses: {},
+  timetables: [],
   swept: noSweep,
   canPersist: true,
 };
@@ -109,7 +120,7 @@ class BasketStore {
 
     if (!sameSubject) {
       const basket: Basket = {
-        id: crypto.randomUUID(),
+        id: createId(),
         label: course.name,
         required: true,
         courseIds: [course.id],
@@ -161,9 +172,34 @@ class BasketStore {
     this.commit({ constraints: next });
   };
 
+  /**
+   * 확정한 시간표는 바구니와 달리 스냅샷을 통째로 들고 저장한다. 나중에 백엔드에 닿지 못해도
+   * 열어볼 수 있어야 하기 때문이다. 학기를 모르면 만료를 판정할 수 없으므로 저장하지 않는다.
+   */
+  saveTimetable = (name: string, courses: Course[]): void => {
+    if (this.semesterKey === null) return;
+    this.shelf.saveTimetable({
+      id: createId(),
+      name,
+      savedAt: new Date().toISOString(),
+      semesterKey: this.semesterKey,
+      courses,
+    });
+    this.commit({ timetables: this.shelf.listTimetables(), canPersist: this.shelf.canPersist() });
+  };
+
+  removeTimetable = (id: string): void => {
+    this.shelf.removeTimetable(id);
+    this.commit({ timetables: this.shelf.listTimetables() });
+  };
+
   /** 다른 탭이 저장한 내용을 이 탭 상태로 가져온다. 오래된 상태로 덮어써 잃는 것을 막는다. */
   private reload = (): void => {
-    this.snapshot = { ...this.snapshot, ...workspaceOf(this.shelf.loadWorkspace()) };
+    this.snapshot = {
+      ...this.snapshot,
+      ...workspaceOf(this.shelf.loadWorkspace()),
+      timetables: this.shelf.listTimetables(),
+    };
     this.emit();
   };
 
@@ -183,6 +219,7 @@ class BasketStore {
     const swept = this.sweep();
     this.snapshot = {
       ...workspaceOf(this.shelf.loadWorkspace()),
+      timetables: this.shelf.listTimetables(),
       swept,
       canPersist: this.shelf.canPersist(),
     };
@@ -242,6 +279,8 @@ export default function BasketProvider({
       removeBasket: store.removeBasket,
       toggleRequired: store.toggleRequired,
       setConstraints: store.setConstraints,
+      saveTimetable: store.saveTimetable,
+      removeTimetable: store.removeTimetable,
     }),
     [snapshot, store],
   );
