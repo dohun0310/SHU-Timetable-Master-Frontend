@@ -21,6 +21,7 @@ import {
   type Course,
   type SemesterKey,
 } from "@/lib/timetable/types";
+import { createId } from "@/lib/utils/id";
 
 interface BasketSnapshot {
   baskets: Basket[];
@@ -119,7 +120,7 @@ class BasketStore {
 
     if (!sameSubject) {
       const basket: Basket = {
-        id: crypto.randomUUID(),
+        id: createId(),
         label: course.name,
         required: true,
         courseIds: [course.id],
@@ -178,7 +179,7 @@ class BasketStore {
   saveTimetable = (name: string, courses: Course[]): void => {
     if (this.semesterKey === null) return;
     this.shelf.saveTimetable({
-      id: crypto.randomUUID(),
+      id: createId(),
       name,
       savedAt: new Date().toISOString(),
       semesterKey: this.semesterKey,
