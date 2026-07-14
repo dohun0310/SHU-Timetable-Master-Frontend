@@ -1,6 +1,11 @@
 import "server-only";
 
-import type { Course, CourseSchedule, Meeting } from "../timetable/types";
+import type { Course, CourseSchedule, Meeting, Organization } from "../timetable/types";
+
+interface BackendOrganization {
+  id: string;
+  name: string;
+}
 
 interface BackendMeeting {
   day: Meeting["day"];
@@ -25,8 +30,8 @@ export interface BackendCourse {
   semester: Course["semester"];
   category: Course["category"];
   categoryLabel: string;
-  department: Course["department"];
-  majors: Course["majors"];
+  department: BackendOrganization | null;
+  majors: BackendOrganization[];
   courseCode: string;
   classNumber: string;
   name: string;
@@ -35,6 +40,13 @@ export interface BackendCourse {
   hours: number;
   schedule: BackendSchedule;
   source?: unknown;
+}
+
+function toOrganization(raw: BackendOrganization): Organization {
+  return {
+    id: raw.id,
+    name: raw.name,
+  };
 }
 
 function toMeeting(raw: BackendMeeting): Meeting {
@@ -57,8 +69,8 @@ export function toCourse(raw: BackendCourse): Course {
     semester: raw.semester,
     category: raw.category,
     categoryLabel: raw.categoryLabel,
-    department: raw.department,
-    majors: raw.majors,
+    department: raw.department ? toOrganization(raw.department) : null,
+    majors: raw.majors.map(toOrganization),
     courseCode: raw.courseCode,
     classNumber: raw.classNumber,
     name: raw.name,

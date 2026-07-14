@@ -1,6 +1,8 @@
 import "server-only";
 
 import type {
+  CatalogFilter,
+  CatalogFilters,
   CatalogMeta,
   CourseCatalog,
   CoursePage,
@@ -10,9 +12,42 @@ import type { Course, SemesterInfo } from "../timetable/types";
 import { backendGet, NotFoundError } from "./backend-client";
 import { toCourse, type BackendCourse } from "./course-mapper";
 
+interface BackendCatalogFilter {
+  id: string;
+  label: string;
+  count: number;
+}
+
+interface BackendCatalogFilters {
+  categories: BackendCatalogFilter[];
+  departments: BackendCatalogFilter[];
+  majors: BackendCatalogFilter[];
+  professors: BackendCatalogFilter[];
+  days: BackendCatalogFilter[];
+}
+
 interface MetaResponse {
   meta: { academicYear: number; semester: SemesterInfo["semester"]; courseCount: number };
-  filters: CatalogMeta["filters"];
+  filters: BackendCatalogFilters;
+}
+
+function toCatalogFilter(raw: BackendCatalogFilter): CatalogFilter {
+  return {
+    id: raw.id,
+    label: raw.label,
+    count: raw.count,
+  };
+}
+
+/** 필터 목록도 백엔드 형태를 그대로 넘기지 않고 도메인 타입으로 정제한다. */
+function toCatalogFilters(raw: BackendCatalogFilters): CatalogFilters {
+  return {
+    categories: raw.categories.map(toCatalogFilter),
+    departments: raw.departments.map(toCatalogFilter),
+    majors: raw.majors.map(toCatalogFilter),
+    professors: raw.professors.map(toCatalogFilter),
+    days: raw.days.map(toCatalogFilter),
+  };
 }
 
 interface BackendCoursePage extends Omit<CoursePage, "courses"> {
@@ -73,7 +108,7 @@ export class HttpCourseCatalog implements CourseCatalog {
         semester: response.meta.semester,
       },
       courseCount: response.meta.courseCount,
-      filters: response.filters,
+      filters: toCatalogFilters(response.filters),
     };
   }
 }
