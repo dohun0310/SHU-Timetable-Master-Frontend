@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import ToggleChip from "@/components/ToggleChip";
 import type { CatalogFilter, CatalogFilters } from "@/lib/contracts/course-catalog";
 import { weekdayLabels, weekdays } from "@/lib/timetable/types";
 
@@ -49,6 +50,30 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
 
   const selectedCategories = listOf("category");
   const selectedDays = listOf("day");
+
+  /**
+   * 칩은 폼 값이지만 클릭으로 다루면 iOS에서 엉뚱한 칩이 켜진다(ToggleChip 주석 참고).
+   * 그래서 선택 상태를 직접 들고 있다가 hidden input으로 폼에 실어 보낸다. 검색이 끝나 URL이
+   * 바뀌면 그 URL을 다시 정답으로 삼는다.
+   */
+  const urlKey = searchParams.toString();
+  const [chips, setChips] = useState({
+    urlKey,
+    categories: selectedCategories,
+    days: selectedDays,
+  });
+  if (chips.urlKey !== urlKey) {
+    setChips({ urlKey, categories: selectedCategories, days: selectedDays });
+  }
+
+  const toggleChip = (key: "categories" | "days", value: string) => {
+    setChips((previous) => ({
+      ...previous,
+      [key]: previous[key].includes(value)
+        ? previous[key].filter((selected) => selected !== value)
+        : [...previous[key], value],
+    }));
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -290,42 +315,39 @@ export default function SearchFilters({ filters }: { filters: CatalogFilters }) 
           <legend className={labelClass()}>이수구분</legend>
           <div className="flex flex-wrap gap-1.5">
             {filters.categories.map((category) => (
-              <label
+              <ToggleChip
                 key={category.id}
-                className="has-checked:border-foreground has-checked:bg-foreground has-checked:text-background flex touch-manipulation cursor-pointer items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1 text-xs text-gray-700 has-focus-visible:ring-2 has-focus-visible:ring-gray-500 dark:border-gray-700 dark:text-gray-300"
+                pressed={chips.categories.includes(category.id)}
+                onToggle={() => toggleChip("categories", category.id)}
+                className="gap-1.5 px-2.5 py-1"
               >
-                <input
-                  type="checkbox"
-                  name="category"
-                  value={category.id}
-                  defaultChecked={selectedCategories.includes(category.id)}
-                  className="sr-only"
-                />
                 {category.label} ({category.count})
-              </label>
+              </ToggleChip>
             ))}
           </div>
+          {chips.categories.map((category) => (
+            <input key={category} type="hidden" name="category" value={category} />
+          ))}
         </fieldset>
 
         <fieldset className="mt-3">
           <legend className={labelClass()}>요일</legend>
           <div className="flex flex-wrap gap-1.5">
             {weekdays.map((day) => (
-              <label
+              <ToggleChip
                 key={day}
-                className="has-checked:border-foreground has-checked:bg-foreground has-checked:text-background flex touch-manipulation h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-gray-200 text-xs text-gray-700 has-focus-visible:ring-2 has-focus-visible:ring-gray-500 dark:border-gray-700 dark:text-gray-300"
+                pressed={chips.days.includes(day)}
+                onToggle={() => toggleChip("days", day)}
+                label={`요일 ${weekdayLabels[day]}`}
+                className="h-8 w-8"
               >
-                <input
-                  type="checkbox"
-                  name="day"
-                  value={day}
-                  defaultChecked={selectedDays.includes(day)}
-                  className="sr-only"
-                />
                 {weekdayLabels[day]}
-              </label>
+              </ToggleChip>
             ))}
           </div>
+          {chips.days.map((day) => (
+            <input key={day} type="hidden" name="day" value={day} />
+          ))}
         </fieldset>
 
         <div className="mt-4 flex gap-2">

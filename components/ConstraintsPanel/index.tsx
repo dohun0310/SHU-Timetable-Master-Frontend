@@ -1,8 +1,8 @@
 "use client";
 
 import { useBasket } from "@/components/BasketProvider";
+import ToggleChip from "@/components/ToggleChip";
 import { weekdayLabels, weekdays, type Weekday } from "@/lib/timetable/types";
-import { cn } from "@/lib/utils/cn";
 
 const fieldClass =
   "bg-background w-full appearance-none rounded-md border border-gray-200 px-2.5 py-1.5 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none dark:border-gray-700";
@@ -41,31 +41,17 @@ export default function ConstraintsPanel() {
       <fieldset>
         <legend className={labelClass}>공강일</legend>
         <div className="flex flex-wrap gap-1.5">
-          {selectableDays.map((day) => {
-            const selected = constraints.freeDays.includes(day);
-            return (
-              /**
-               * iOS Safari는 더블탭 확대를 판별하려고 탭 후 클릭을 잠시 미루고, 그 사이에 다른
-               * 칸을 누르면 클릭이 먼저 누른 요소로 합성된다. `touch-manipulation`으로 확대를
-               * 꺼 지연을 없앤다. 숨긴 체크박스를 label이 대신 누르는 구조도 이 재타게팅에
-               * 취약하므로 버튼으로 직접 다룬다.
-               */
-              <button
-                key={day}
-                type="button"
-                onClick={() => toggleFreeDay(day)}
-                aria-pressed={selected}
-                className={cn(
-                  "flex h-8 w-8 touch-manipulation items-center justify-center rounded-md border text-xs focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:outline-none",
-                  selected
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-gray-200 text-gray-700 dark:border-gray-700 dark:text-gray-300",
-                )}
-              >
-                {weekdayLabels[day]}
-              </button>
-            );
-          })}
+          {selectableDays.map((day) => (
+            <ToggleChip
+              key={day}
+              pressed={constraints.freeDays.includes(day)}
+              onToggle={() => toggleFreeDay(day)}
+              label={`공강일 ${weekdayLabels[day]}`}
+              className="h-8 w-8"
+            >
+              {weekdayLabels[day]}
+            </ToggleChip>
+          ))}
         </div>
       </fieldset>
 
