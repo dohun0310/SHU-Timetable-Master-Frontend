@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
-import BasketPanel from "@/components/BasketPanel";
-import ConstraintsPanel from "@/components/ConstraintsPanel";
 import CourseList, { CourseListSkeleton } from "@/components/CourseList";
 import Pagination from "@/components/Pagination";
 import SearchFilters from "@/components/SearchFilters";
@@ -84,7 +82,7 @@ async function SearchResults({
 
   if (!page) {
     return (
-      <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <p className="rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200">
         검색 조건이 올바르지 않아 결과를 불러오지 못했습니다. 조건을 초기화하고 다시 검색해주세요.
       </p>
     );
@@ -93,7 +91,7 @@ async function SearchResults({
   return (
     <div className="flex flex-col gap-4">
       {droppedLabels.length > 0 ? (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <p className="rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-sm text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200">
           다음 조건은 사용할 수 없어 제외했습니다: {droppedLabels.join(", ")}
         </p>
       ) : null}
@@ -124,17 +122,9 @@ export default async function SearchPage({
   return (
     <div className="flex flex-col gap-4">
       <SearchFilters filters={filters} />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_19rem]">
-        <div className="min-w-0">
-          <Suspense key={JSON.stringify(query)} fallback={<CourseListSkeleton />}>
-            <SearchResults catalog={catalog} query={query} unreadableFields={unreadableFields} />
-          </Suspense>
-        </div>
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
-          <BasketPanel />
-          <ConstraintsPanel />
-        </aside>
-      </div>
+      <Suspense key={JSON.stringify(query)} fallback={<CourseListSkeleton />}>
+        <SearchResults catalog={catalog} query={query} unreadableFields={unreadableFields} />
+      </Suspense>
     </div>
   );
 }

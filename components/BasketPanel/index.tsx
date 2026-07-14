@@ -37,7 +37,7 @@ function BasketSection({
         </button>
       </div>
       {isSchedulable(course) ? null : (
-        <p className="mt-1.5 rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-2xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <p className="mt-1.5 rounded border border-orange-300 bg-orange-50 px-1.5 py-0.5 text-2xs text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200">
           강의시간 정보가 불완전해 자동 조합에 쓸 수 없습니다
         </p>
       )}
@@ -74,7 +74,7 @@ function BasketItem({ basket }: { basket: Basket }) {
           <span className="flex items-center gap-1.5">
             <span className="truncate text-sm font-medium">{basket.label}</span>
             {hasWarning ? (
-              <span className="shrink-0 rounded bg-amber-50 px-1 text-2xs text-amber-800 dark:bg-amber-950 dark:text-amber-200">
+              <span className="shrink-0 rounded bg-orange-50 px-1 text-2xs text-orange-800 dark:bg-orange-900 dark:text-orange-200">
                 주의
               </span>
             ) : null}
@@ -154,7 +154,7 @@ export default function BasketPanel() {
       {sweptNotice ? (
         <p
           role="status"
-          className="mb-3 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+          className="mb-3 rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200"
         >
           {sweptNotice}
         </p>
@@ -163,7 +163,7 @@ export default function BasketPanel() {
       {canPersist ? null : (
         <p
           role="status"
-          className="mb-3 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200"
+          className="mb-3 rounded border border-orange-300 bg-orange-50 px-2 py-1 text-xs text-orange-800 dark:border-orange-800 dark:bg-orange-900 dark:text-orange-200"
         >
           이 브라우저에서는 바구니가 저장되지 않습니다. 탭을 닫으면 사라집니다.
         </p>
