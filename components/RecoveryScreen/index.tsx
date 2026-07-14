@@ -1,12 +1,16 @@
 "use client";
 
-import { clearStoredData } from "@/lib/storage/local-timetable-shelf";
-
 /** 저장본이 깨져 렌더가 터진 경우에도 사용자가 DevTools 없이 빠져나올 수 있어야 한다. */
-export default function RecoveryScreen({ onRetry }: { onRetry: () => void }) {
+export default function RecoveryScreen({
+  onRetry,
+  onClear,
+}: {
+  onRetry: () => void;
+  onClear: () => void;
+}) {
   /** 메모리에 남은 깨진 스냅샷까지 확실히 버리려면 지운 뒤 새로 불러와야 한다. */
   const clearAndRestart = () => {
-    clearStoredData();
+    onClear();
     window.location.reload();
   };
 
