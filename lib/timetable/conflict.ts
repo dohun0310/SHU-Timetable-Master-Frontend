@@ -16,8 +16,8 @@ export function conflictingPairs(courses: Course[]): Array<[string, string]> {
   const pairs: Array<[string, string]> = [];
   for (let i = 0; i < courses.length; i += 1) {
     for (let j = i + 1; j < courses.length; j += 1) {
-      const left = courses[i]!;
-      const right = courses[j]!;
+      const left = courses[i];
+      const right = courses[j];
       if (coursesConflict(left, right)) pairs.push([left.id, right.id]);
     }
   }
