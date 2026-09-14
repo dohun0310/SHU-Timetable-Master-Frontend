@@ -1,0 +1,11 @@
+.git
+.github
+.next
+node_modules
+coverage
+*.log
+.env*
+Dockerfile
+Jenkinsfile
+scripts
+README.md
