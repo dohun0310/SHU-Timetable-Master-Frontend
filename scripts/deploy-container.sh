@@ -10,6 +10,18 @@ HOST_PORT="${HOST_PORT:-8970}"
 CONTAINER_PORT="${CONTAINER_PORT:-3000}"
 HEALTH_ATTEMPTS="${HEALTH_ATTEMPTS:-30}"
 HEALTH_INTERVAL="${HEALTH_INTERVAL:-2}"
+# 같은 사용자 정의 네트워크에 속한 컨테이너는 이름으로 서로를 찾을 수 있다.
+DOCKER_NETWORK="${DOCKER_NETWORK:-}"
+
+# 네트워크는 호스트에서 미리 생성해 둔 것을 사용한다.
+# 오타 난 이름으로 새 네트워크가 생겨 서비스가 분리되는 상황을 막기 위해
+# 이 스크립트에서는 네트워크를 만들지 않는다.
+if [ -n "$DOCKER_NETWORK" ] \
+  && ! docker network inspect "$DOCKER_NETWORK" >/dev/null 2>&1; then
+  printf 'Docker network not found: %s\n' "$DOCKER_NETWORK" >&2
+  printf 'Create it on the host first: docker network create %s\n' "$DOCKER_NETWORK" >&2
+  exit 1
+fi
 
 if [ -n "${APP_ENV_FILE:-}" ] && [ ! -r "$APP_ENV_FILE" ]; then
   printf 'Environment file is not readable: %s\n' "$APP_ENV_FILE" >&2
@@ -46,6 +58,10 @@ run_container() {
   restart_policy="$4"
 
   set -- docker run --pull never -d --name "$name" --restart "$restart_policy"
+
+  if [ -n "$DOCKER_NETWORK" ]; then
+    set -- "$@" --network "$DOCKER_NETWORK"
+  fi
 
   if [ -n "${APP_ENV_FILE:-}" ]; then
     set -- "$@" --env-file "$APP_ENV_FILE"
