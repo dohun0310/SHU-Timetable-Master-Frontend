@@ -4,6 +4,12 @@ import { CatalogUnavailableError } from "@/lib/contracts/errors";
 import { semesterKeyOf } from "@/lib/timetable/semester";
 import type { SemesterKey } from "@/lib/timetable/types";
 
+/**
+ * 학기 정보는 요청 시점의 백엔드 상태에 달려 있다.
+ * 정적 프리렌더링하면 백엔드가 없는 빌드 시점의 결과가 그대로 굳어버린다.
+ */
+export const dynamic = "force-dynamic";
+
 /** 학기를 모르면 자동 조합을 걸 수 없다. 그래도 화면은 떠야 하므로 null로 넘긴다. */
 async function loadSemesterKey(): Promise<SemesterKey | null> {
   try {
