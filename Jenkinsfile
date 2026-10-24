@@ -73,7 +73,7 @@ pipeline {
             steps {
                 sh '''
                     set -eu
-                    docker build --tag "${IMAGE_NAME}:${GIT_COMMIT}" .
+                    docker build --pull --tag "${IMAGE_NAME}:${GIT_COMMIT}" .
                 '''
             }
         }
